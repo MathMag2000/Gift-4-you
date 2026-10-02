@@ -10,38 +10,38 @@
 ## Configuração do projeto
 
 * [x] Criar projeto Java
-* [ ] Configurar estrutura de pacotes
-* [ ] Configurar Git
-* [ ] Criar repositório no GitHub
-* [ ] Fazer primeiro push para o GitHub
+* [x] Configurar estrutura de pacotes
+* [x] Configurar Git
+* [x] Criar repositório no GitHub
+* [x] Fazer primeiro push para o GitHub
 
 ## Cadastro de pessoas
 
-* [ ] Criar classe Pessoa
-* [ ] Implementar cadastro de pessoa
-* [ ] Implementar consulta de pessoas
-* [ ] Implementar alteração de pessoa
-* [ ] Implementar remoção de pessoa
-* [ ] Validar dados obrigatórios
+* [x] Criar classe Pessoa
+* [x] Implementar cadastro de pessoa
+* [x] Implementar consulta de pessoas
+* [x] Implementar alteração de pessoa
+* [x] Implementar remoção de pessoa
+* [x] Validar dados obrigatórios
 
 ## Informações da pessoa
 
-* [ ] Adicionar idade
-* [ ] Adicionar vínculo
-* [ ] Adicionar gostos e interesses
-* [ ] Adicionar itens que a pessoa não gosta
-* [ ] Adicionar ocasião
-* [ ] Adicionar faixa de orçamento
+* [x] Adicionar idade
+* [x] Adicionar vínculo
+* [x] Adicionar gostos e interesses
+* [x] Adicionar itens que a pessoa não gosta
+* [x] Adicionar ocasião
+* [x] Adicionar faixa de orçamento
 
 ## Cadastro de presentes
 
-* [ ] Criar classe Presente
-* [ ] Implementar cadastro de presentes
-* [ ] Implementar consulta de presentes
-* [ ] Implementar alteração de presentes
-* [ ] Implementar remoção de presentes
-* [ ] Adicionar categorias de presentes
-* [ ] Adicionar preço dos presentes
+* [x] Criar classe Presente
+* [x] Implementar cadastro de presentes
+* [x] Implementar consulta de presentes
+* [x] Implementar alteração de presentes
+* [x] Implementar remoção de presentes
+* [x] Adicionar categorias de presentes
+* [x] Adicionar preço dos presentes
 
 ## Sistema de sugestões
 
@@ -67,10 +67,10 @@
 ## Validações
 
 * [ ] Validar nome
-* [ ] Validar idade
-* [ ] Validar orçamento
-* [ ] Impedir orçamento mínimo maior que o máximo
-* [ ] Validar informações obrigatórias
+* [x] Validar idade
+* [x] Validar orçamento
+* [x] Impedir orçamento mínimo maior que o máximo
+* [x] Validar informações obrigatórias
 
 ## Testes
 
@@ -92,9 +92,9 @@
 
 ## GitHub
 
-* [ ] Criar repositório remoto
-* [ ] Adicionar `AGENTS.md`
-* [ ] Adicionar `TASKS.md`
-* [ ] Adicionar código-fonte
-* [ ] Criar primeiro commit
-* [ ] Fazer push para o GitHub
+* [x] Criar repositório remoto
+* [x] Adicionar `AGENTS.md`
+* [x] Adicionar `TASKS.md`
+* [x] Adicionar código-fonte
+* [x] Criar primeiro commit
+* [x] Fazer push para o GitHub
