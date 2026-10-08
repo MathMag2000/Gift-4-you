@@ -15,6 +15,8 @@
             <button class="aba aba--ativa" data-secao="pessoas" type="button">Pessoas</button>
             <button class="aba" data-secao="presentes" type="button">Presentes</button>
             <button class="aba" data-secao="sugestoes" type="button">Sugestões</button>
+            <button class="aba" data-secao="favoritos" type="button">Favoritos</button>
+            <button class="aba" data-secao="historico" type="button">Histórico</button>
         </nav>
     </div>
 </header>
@@ -129,6 +131,28 @@
             </div>
         </div>
         <div id="resultado-sugestoes"></div>
+    </section>
+
+    <!-- Favoritos -->
+    <section id="secao-favoritos" class="secao">
+        <div class="cabecalho-secao">
+            <h2>Presentes favoritos</h2>
+            <label class="filtro">Pessoa
+                <select id="filtro-favoritos"></select>
+            </label>
+        </div>
+        <div id="lista-favoritos" class="grade-sugestoes"></div>
+    </section>
+
+    <!-- Histórico -->
+    <section id="secao-historico" class="secao">
+        <div class="cabecalho-secao">
+            <h2>Histórico de sugestões</h2>
+            <label class="filtro">Pessoa
+                <select id="filtro-historico"></select>
+            </label>
+        </div>
+        <div id="lista-historico" class="lista"></div>
     </section>
 </main>
 

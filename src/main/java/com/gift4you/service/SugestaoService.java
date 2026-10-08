@@ -2,6 +2,8 @@ package com.gift4you.service;
 
 import com.gift4you.model.FaixaOrcamento;
 import com.gift4you.model.IdeiaPresente;
+import com.gift4you.model.ItemSugerido;
+import com.gift4you.model.OrigemSugestao;
 import com.gift4you.model.Pessoa;
 import com.gift4you.model.Presente;
 import com.gift4you.model.ResultadoIdeias;
@@ -28,18 +30,22 @@ public class SugestaoService {
     private final PresenteService presenteService;
     private final ComparadorTermos comparador;
     private final GeradorIdeias geradorIdeias;
+    private final HistoricoService historicoService;
 
     public SugestaoService(PessoaService pessoaService, PresenteService presenteService,
-                           ComparadorTermos comparador, GeradorIdeias geradorIdeias) {
+                           ComparadorTermos comparador, GeradorIdeias geradorIdeias,
+                           HistoricoService historicoService) {
         this.pessoaService = pessoaService;
         this.presenteService = presenteService;
         this.comparador = comparador;
         this.geradorIdeias = geradorIdeias;
+        this.historicoService = historicoService;
     }
 
+    /** Gera as sugestões do catálogo e as registra no histórico. */
     public List<SugestaoPresente> gerarSugestoes(int pessoaId) {
         Pessoa pessoa = pessoaService.buscarPorId(pessoaId);
-        return presenteService.listar().stream()
+        List<SugestaoPresente> sugestoes = presenteService.listar().stream()
                 .filter(presente -> dentroDoOrcamento(presente.getPreco(), pessoa.getOrcamento()))
                 .filter(presente -> !rejeitado(pessoa, textosDoPresente(presente)))
                 .map(presente -> avaliar(pessoa, presente))
@@ -48,11 +54,14 @@ public class SugestaoService {
                         .thenComparing(sugestao -> sugestao.presente().getPreco()))
                 .limit(LIMITE_SUGESTOES)
                 .toList();
+        historicoService.registrar(pessoa, OrigemSugestao.CATALOGO,
+                sugestoes.stream().map(ItemSugerido::de).toList());
+        return sugestoes;
     }
 
     /**
      * Pede ideias à IA e aplica as mesmas regras de orçamento e rejeição do catálogo,
-     * pois o modelo nem sempre respeita as restrições pedidas.
+     * pois o modelo nem sempre respeita as restrições pedidas. As ideias aprovadas vão para o histórico.
      */
     public ResultadoIdeias gerarIdeiasComIa(int pessoaId) {
         Pessoa pessoa = pessoaService.buscarPorId(pessoaId);
@@ -61,6 +70,7 @@ public class SugestaoService {
                 .filter(ideia -> dentroDoOrcamento(ideia.precoEstimado(), pessoa.getOrcamento()))
                 .filter(ideia -> !rejeitado(pessoa, List.of(ideia.nome(), ideia.categoria())))
                 .toList();
+        historicoService.registrar(pessoa, OrigemSugestao.IA, aprovadas.stream().map(ItemSugerido::de).toList());
         return new ResultadoIdeias(aprovadas, recebidas.size() - aprovadas.size());
     }
 

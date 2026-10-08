@@ -39,4 +39,14 @@ export const api = {
 
     sugestoesDoCatalogo: (pessoaId) => requisitar("GET", `/api/pessoas/${pessoaId}/sugestoes`),
     ideiasComIa: (pessoaId) => requisitar("POST", `/api/pessoas/${pessoaId}/ideias-ia`),
+
+    listarFavoritos: (pessoaId) => requisitar("GET", `/api/favoritos${filtroPessoa(pessoaId)}`),
+    favoritar: (dados) => requisitar("POST", "/api/favoritos", dados),
+    removerFavorito: (id) => requisitar("DELETE", `/api/favoritos/${id}`),
+
+    listarHistorico: (pessoaId) => requisitar("GET", `/api/historico${filtroPessoa(pessoaId)}`),
 };
+
+function filtroPessoa(pessoaId) {
+    return pessoaId ? `?pessoaId=${pessoaId}` : "";
+}

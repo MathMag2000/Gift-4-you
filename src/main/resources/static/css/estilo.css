@@ -61,6 +61,7 @@ h2 {
 
 .abas {
     display: flex;
+    flex-wrap: wrap;
     gap: .25rem;
 }
 
@@ -469,4 +470,69 @@ legend {
 
 .item__info {
     flex: 1;
+}
+
+/* Favoritos e histórico */
+.botao--favorito {
+    background: #fff;
+    border-color: #f1d59a;
+    color: #9a6700;
+}
+
+.botao--favorito:hover:not(:disabled) {
+    background: #fff8e6;
+}
+
+.botao--favorito[aria-pressed="true"] {
+    background: #fff3d1;
+    border-color: #e5b647;
+}
+
+.etiqueta--origem-catalogo,
+.etiqueta--origem-ia {
+    font-size: .72rem;
+    font-weight: 600;
+    margin-left: .35rem;
+    vertical-align: middle;
+}
+
+.etiqueta--origem-ia {
+    background: #e2f5f1;
+    color: var(--cor-ia);
+}
+
+.cabecalho-secao {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: end;
+    gap: .75rem;
+    margin-bottom: 1rem;
+}
+
+.cabecalho-secao h2 {
+    margin: 0;
+}
+
+.filtro {
+    min-width: 220px;
+}
+
+.registro__resumo {
+    color: var(--cor-texto-suave);
+    font-size: .9rem;
+    white-space: nowrap;
+}
+
+.registro__itens {
+    margin-top: 1rem;
+}
+
+.registro .sugestao {
+    box-shadow: none;
+    background: var(--cor-fundo);
+}
+
+.registro .acoes {
+    margin-top: .75rem;
 }

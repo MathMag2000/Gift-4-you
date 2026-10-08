@@ -6,11 +6,13 @@ import com.gift4you.model.Pessoa;
 import com.gift4you.repository.PessoaRepository;
 
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class PessoaService {
 
     private final PessoaRepository repository;
     private final PessoaValidador validador;
+    private final List<OuvinteRemocaoPessoa> ouvintesRemocao = new CopyOnWriteArrayList<>();
 
     public PessoaService(PessoaRepository repository, PessoaValidador validador) {
         this.repository = repository;
@@ -40,5 +42,10 @@ public class PessoaService {
         if (!repository.remover(id)) {
             throw new PessoaNaoEncontradaException(id);
         }
+        ouvintesRemocao.forEach(ouvinte -> ouvinte.aoRemoverPessoa(id));
+    }
+
+    public void adicionarOuvinteRemocao(OuvinteRemocaoPessoa ouvinte) {
+        ouvintesRemocao.add(ouvinte);
     }
 }
