@@ -54,6 +54,7 @@
 * [x] Ignorar categorias rejeitadas
 * [x] Exibir sugestões para o usuário
 * [x] Gerar ideias de presentes com IA (Gemini)
+* [x] Adicionar link de compra (busca na Amazon) nas ideias da IA
 
 ## Interface web
 

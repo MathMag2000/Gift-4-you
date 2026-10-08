@@ -64,6 +64,8 @@ class HistoricoServiceTest {
         assertThat(registro.getItens()).extracting(ItemSugerido::nome).containsExactly("Prensa francesa");
         assertThat(registro.getItens().getFirst().presenteId()).isNull();
         assertThat(registro.getItens().getFirst().motivos()).containsExactly("Motivo de Prensa francesa");
+        assertThat(registro.getItens().getFirst().linkCompra())
+                .isEqualTo("https://www.amazon.com.br/s?k=Prensa+francesa");
     }
 
     @Test

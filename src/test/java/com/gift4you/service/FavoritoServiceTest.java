@@ -87,7 +87,9 @@ class FavoritoServiceTest {
         assertThat(favorito.getItem().categoria()).isEqualTo("Utensílios");
         assertThat(favorito.getItem().presenteId()).isNull();
         assertThat(favorito.getItem().motivos()).containsExactly("Bom para quem gosta de café");
-        assertThat(favorito.getItem().linkCompra()).isNull();
+        assertThat(favorito.getItem().linkCompra())
+                .as("o link enviado (javascript:...) é trocado pela busca na loja")
+                .isEqualTo("https://www.amazon.com.br/s?k=Prensa+Francesa");
         assertThat(favorito.getItem().imagemUrl()).isNull();
     }
 

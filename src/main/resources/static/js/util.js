@@ -39,6 +39,14 @@ export function imagemProduto(url, descricao, classeExtra = "") {
                  loading="lazy" referrerpolicy="no-referrer">`;
 }
 
+/** Torna o conteúdo (imagem ou nome do produto) clicável, abrindo a loja em outra aba. */
+export function comLink(url, conteudoHtml) {
+    const endereco = urlSegura(url);
+    return endereco
+        ? `<a class="link-produto" href="${escaparHtml(endereco)}" target="_blank" rel="noopener noreferrer">${conteudoHtml}</a>`
+        : conteudoHtml;
+}
+
 export function linkCompra(url, texto = "Comprar na loja ↗") {
     const endereco = urlSegura(url);
     return endereco

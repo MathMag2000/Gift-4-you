@@ -2,7 +2,7 @@ import { api } from "./api.js";
 import { ControleFormulario } from "./formulario.js";
 import { descricao, preencherMarcadores } from "./opcoes.js";
 import {
-    escaparHtml, etiquetas, formatarMoeda, imagemProduto, linkCompra, listaParaTexto, mostrarAviso, mostrarErro,
+    comLink, escaparHtml, etiquetas, formatarMoeda, imagemProduto, linkCompra, listaParaTexto, mostrarAviso, mostrarErro,
     numeroOuNulo, textoOuNulo, textoParaLista,
 } from "./util.js";
 
@@ -111,11 +111,11 @@ function renderizar() {
     }
     lista.innerHTML = presentes.map((presente) => `
         <article class="cartao item item--com-imagem">
-            ${imagemProduto(presente.imagemUrl, presente.nome, "imagem-produto--miniatura")}
+            ${comLink(presente.linkCompra, imagemProduto(presente.imagemUrl, presente.nome, "imagem-produto--miniatura"))}
             <div class="item__conteudo">
                 <div class="item__topo">
                     <div>
-                        <h3 class="item__titulo">${escaparHtml(presente.nome)}</h3>
+                        <h3 class="item__titulo">${comLink(presente.linkCompra, escaparHtml(presente.nome))}</h3>
                         <p class="item__subtitulo">${escaparHtml(descricao("categorias", presente.categoria))}</p>
                     </div>
                     <span class="item__preco">${formatarMoeda(presente.preco)}</span>

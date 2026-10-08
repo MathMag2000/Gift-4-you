@@ -22,14 +22,16 @@ public class FavoritoService implements OuvinteRemocaoPessoa {
     private final FavoritoValidador validador;
     private final PessoaService pessoaService;
     private final PresenteService presenteService;
+    private final LinkBuscaProduto linkBusca;
     private final Clock relogio;
 
-    public FavoritoService(FavoritoRepository repository, FavoritoValidador validador,
-                           PessoaService pessoaService, PresenteService presenteService, Clock relogio) {
+    public FavoritoService(FavoritoRepository repository, FavoritoValidador validador, PessoaService pessoaService,
+                           PresenteService presenteService, LinkBuscaProduto linkBusca, Clock relogio) {
         this.repository = repository;
         this.validador = validador;
         this.pessoaService = pessoaService;
         this.presenteService = presenteService;
+        this.linkBusca = linkBusca;
         this.relogio = relogio;
     }
 
@@ -41,7 +43,7 @@ public class FavoritoService implements OuvinteRemocaoPessoa {
         int pessoaId = pessoaService.buscarPorId(dados.pessoaId()).getId();
         ItemSugerido item = dados.origem() == OrigemSugestao.CATALOGO
                 ? itemDoCatalogo(dados.item())
-                : validador.validarIdeia(dados.item());
+                : ideiaComLinkDeBusca(validador.validarIdeia(dados.item()));
 
         return repository.listarPorPessoa(pessoaId).stream()
                 .filter(favorito -> favorito.refereSeA(dados.origem(), item))
@@ -69,6 +71,11 @@ public class FavoritoService implements OuvinteRemocaoPessoa {
     @Override
     public void aoRemoverPessoa(int pessoaId) {
         repository.removerPorPessoa(pessoaId);
+    }
+
+    /** O link é montado aqui, e não aceito do navegador, para não guardar links de terceiros. */
+    private ItemSugerido ideiaComLinkDeBusca(ItemSugerido ideia) {
+        return ideia.comLinkCompra(linkBusca.linkPara(ideia.nome()));
     }
 
     /** Usa os dados atuais do catálogo, e não os enviados, mantendo só os motivos da sugestão. */
