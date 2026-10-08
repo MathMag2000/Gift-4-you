@@ -22,16 +22,16 @@ public class FavoritoService implements OuvinteRemocaoPessoa {
     private final FavoritoValidador validador;
     private final PessoaService pessoaService;
     private final PresenteService presenteService;
-    private final LinkBuscaProduto linkBusca;
+    private final LojaOnline loja;
     private final Clock relogio;
 
     public FavoritoService(FavoritoRepository repository, FavoritoValidador validador, PessoaService pessoaService,
-                           PresenteService presenteService, LinkBuscaProduto linkBusca, Clock relogio) {
+                           PresenteService presenteService, LojaOnline loja, Clock relogio) {
         this.repository = repository;
         this.validador = validador;
         this.pessoaService = pessoaService;
         this.presenteService = presenteService;
-        this.linkBusca = linkBusca;
+        this.loja = loja;
         this.relogio = relogio;
     }
 
@@ -43,7 +43,7 @@ public class FavoritoService implements OuvinteRemocaoPessoa {
         int pessoaId = pessoaService.buscarPorId(dados.pessoaId()).getId();
         ItemSugerido item = dados.origem() == OrigemSugestao.CATALOGO
                 ? itemDoCatalogo(dados.item())
-                : ideiaComLinkDeBusca(validador.validarIdeia(dados.item()));
+                : ideiaComLinkDaLoja(validador.validarIdeia(dados.item()), dados.item());
 
         return repository.listarPorPessoa(pessoaId).stream()
                 .filter(favorito -> favorito.refereSeA(dados.origem(), item))
@@ -73,9 +73,14 @@ public class FavoritoService implements OuvinteRemocaoPessoa {
         repository.removerPorPessoa(pessoaId);
     }
 
-    /** O link é montado aqui, e não aceito do navegador, para não guardar links de terceiros. */
-    private ItemSugerido ideiaComLinkDeBusca(ItemSugerido ideia) {
-        return ideia.comLinkCompra(linkBusca.linkPara(ideia.nome()));
+    /**
+     * Mantém o link e a foto enviados somente se forem de um produto da loja; caso contrário usa o link
+     * de busca. Assim não se guarda link de outro site, como um endereço malicioso.
+     */
+    private ItemSugerido ideiaComLinkDaLoja(ItemSugerido ideia, ItemSugerido enviado) {
+        String link = loja.ehLinkDeProduto(enviado.linkCompra()) ? enviado.linkCompra() : loja.linkBusca(ideia.nome());
+        String imagem = loja.ehImagemDaLoja(enviado.imagemUrl()) ? enviado.imagemUrl() : null;
+        return ideia.naLoja(link, imagem);
     }
 
     /** Usa os dados atuais do catálogo, e não os enviados, mantendo só os motivos da sugestão. */

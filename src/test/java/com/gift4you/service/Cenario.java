@@ -1,6 +1,7 @@
 package com.gift4you.service;
 
-import com.gift4you.integracao.BuscaAmazon;
+import com.gift4you.integracao.LeitorBuscaAmazon;
+import com.gift4you.integracao.LojaAmazon;
 import com.gift4you.model.Categoria;
 import com.gift4you.model.DadosPessoa;
 import com.gift4you.model.DadosPresente;
@@ -9,6 +10,7 @@ import com.gift4you.model.IdeiaPresente;
 import com.gift4you.model.Ocasiao;
 import com.gift4you.model.Pessoa;
 import com.gift4you.model.Presente;
+import com.gift4you.model.ProdutoLoja;
 import com.gift4you.model.Vinculo;
 import com.gift4you.repository.FavoritoRepositoryEmMemoria;
 import com.gift4you.repository.HistoricoRepositoryEmMemoria;
@@ -20,7 +22,9 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -40,11 +44,19 @@ class Cenario {
                 return link.contains("sem-imagem") ? Optional.empty() : Optional.of(link + "/foto.jpg");
             });
     final HistoricoService historico = new HistoricoService(new HistoricoRepositoryEmMemoria(), relogio);
-    final LinkBuscaProduto linkBusca = new BuscaAmazon();
+    /** Produtos que a loja falsa "encontra", pelo nome da ideia. Nomes ausentes simulam produto não encontrado. */
+    final Map<String, ProdutoLoja> produtosNaLoja = new HashMap<>();
+    /** Amazon real nos links e validações, mas sem acessar a internet na busca. */
+    final LojaOnline loja = new LojaAmazon(new LeitorBuscaAmazon()) {
+        @Override
+        public Optional<ProdutoLoja> encontrarProduto(String nomeProduto) {
+            return Optional.ofNullable(produtosNaLoja.get(nomeProduto));
+        }
+    };
     final FavoritoService favoritos = new FavoritoService(new FavoritoRepositoryEmMemoria(), new FavoritoValidador(),
-            pessoas, presentes, linkBusca, relogio);
+            pessoas, presentes, loja, relogio);
     final SugestaoService sugestoes = new SugestaoService(pessoas, presentes, new ComparadorTermos(),
-            (pessoa, quantidade) -> ideiasDaIa, historico, linkBusca);
+            (pessoa, quantidade) -> ideiasDaIa, historico, loja);
 
     Cenario() {
         pessoas.adicionarOuvinteRemocao(historico);

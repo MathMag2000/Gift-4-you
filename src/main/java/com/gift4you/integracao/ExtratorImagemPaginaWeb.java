@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -28,8 +27,6 @@ public class ExtratorImagemPaginaWeb implements ExtratorImagemProduto {
     private static final int MAXIMO_REDIRECIONAMENTOS = 5;
     private static final int TAMANHO_MAXIMO_PAGINA = 2 * 1024 * 1024;
     private static final Duration TEMPO_LIMITE = Duration.ofSeconds(10);
-    private static final String NAVEGADOR = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-            + "(KHTML, like Gecko) Chrome/130.0 Safari/537.36";
     private static final Pattern CHARSET = Pattern.compile("charset=([\\w-]+)", Pattern.CASE_INSENSITIVE);
 
     private final HttpClient cliente = HttpClient.newBuilder()
@@ -53,8 +50,8 @@ public class ExtratorImagemPaginaWeb implements ExtratorImagemProduto {
                     LOG.warn("Endereço recusado ao buscar imagem: {}", endereco.getHost());
                     return Optional.empty();
                 }
-                HttpResponse<InputStream> resposta = cliente.send(requisicao(endereco),
-                        HttpResponse.BodyHandlers.ofInputStream());
+                HttpResponse<InputStream> resposta = cliente.send(
+                        RequisicaoNavegador.paginaHtml(endereco, TEMPO_LIMITE), HttpResponse.BodyHandlers.ofInputStream());
                 Optional<String> destino = resposta.headers().firstValue("Location");
                 if (resposta.statusCode() / 100 == 3 && destino.isPresent()) {
                     resposta.body().close();
@@ -70,16 +67,6 @@ public class ExtratorImagemPaginaWeb implements ExtratorImagemProduto {
             Thread.currentThread().interrupt();
         }
         return Optional.empty();
-    }
-
-    private HttpRequest requisicao(URI endereco) {
-        return HttpRequest.newBuilder(endereco)
-                .timeout(TEMPO_LIMITE)
-                .header("User-Agent", NAVEGADOR)
-                .header("Accept", "text/html,application/xhtml+xml")
-                .header("Accept-Language", "pt-BR,pt;q=0.9")
-                .GET()
-                .build();
     }
 
     private Optional<String> lerImagem(URI endereco, HttpResponse<InputStream> resposta) throws IOException {

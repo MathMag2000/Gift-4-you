@@ -55,6 +55,7 @@
 * [x] Exibir sugestões para o usuário
 * [x] Gerar ideias de presentes com IA (Gemini)
 * [x] Adicionar link de compra (busca na Amazon) nas ideias da IA
+* [x] Encontrar o produto de cada ideia da IA na Amazon (link da página e foto)
 
 ## Interface web
 

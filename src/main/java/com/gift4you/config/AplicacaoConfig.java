@@ -1,9 +1,10 @@
 package com.gift4you.config;
 
-import com.gift4you.integracao.BuscaAmazon;
 import com.gift4you.integracao.ExtratorImagemPaginaWeb;
 import com.gift4you.integracao.GeminiGeradorIdeias;
+import com.gift4you.integracao.LeitorBuscaAmazon;
 import com.gift4you.integracao.LeitorImagemHtml;
+import com.gift4you.integracao.LojaAmazon;
 import com.gift4you.integracao.ProtecaoEnderecoInterno;
 import com.gift4you.repository.FavoritoRepositoryEmMemoria;
 import com.gift4you.repository.HistoricoRepositoryEmMemoria;
@@ -16,7 +17,7 @@ import com.gift4you.service.FavoritoValidador;
 import com.gift4you.service.GeradorIdeias;
 import com.gift4you.service.GeradorIdeiasIndisponivel;
 import com.gift4you.service.HistoricoService;
-import com.gift4you.service.LinkBuscaProduto;
+import com.gift4you.service.LojaOnline;
 import com.gift4you.service.PessoaService;
 import com.gift4you.service.PessoaValidador;
 import com.gift4you.service.PresenteService;
@@ -71,17 +72,17 @@ public class AplicacaoConfig {
         return historicoService;
     }
 
-    /** Loja usada no link de compra das ideias da IA. */
+    /** Loja onde as ideias da IA são procuradas. */
     @Bean
-    public LinkBuscaProduto linkBuscaProduto() {
-        return new BuscaAmazon();
+    public LojaOnline lojaOnline() {
+        return new LojaAmazon(new LeitorBuscaAmazon());
     }
 
     @Bean
     public FavoritoService favoritoService(PessoaService pessoaService, PresenteService presenteService,
-                                           LinkBuscaProduto linkBuscaProduto, Clock relogio) {
+                                           LojaOnline lojaOnline, Clock relogio) {
         FavoritoService favoritoService = new FavoritoService(new FavoritoRepositoryEmMemoria(),
-                new FavoritoValidador(), pessoaService, presenteService, linkBuscaProduto, relogio);
+                new FavoritoValidador(), pessoaService, presenteService, lojaOnline, relogio);
         pessoaService.adicionarOuvinteRemocao(favoritoService);
         return favoritoService;
     }
@@ -89,8 +90,8 @@ public class AplicacaoConfig {
     @Bean
     public SugestaoService sugestaoService(PessoaService pessoaService, PresenteService presenteService,
                                            GeradorIdeias geradorIdeias, HistoricoService historicoService,
-                                           LinkBuscaProduto linkBuscaProduto) {
+                                           LojaOnline lojaOnline) {
         return new SugestaoService(pessoaService, presenteService, new ComparadorTermos(), geradorIdeias,
-                historicoService, linkBuscaProduto);
+                historicoService, lojaOnline);
     }
 }

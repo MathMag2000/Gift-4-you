@@ -9,8 +9,8 @@ import java.util.List;
  * guardar ideias da IA, que não existem no catálogo.
  *
  * @param presenteId id no catálogo; nulo para ideias da IA
- * @param linkCompra página da loja; para ideias da IA, a busca do produto numa loja
- * @param imagemUrl  imagem obtida da página da loja; nula se não houver
+ * @param linkCompra página do produto na loja; para ideias da IA não encontradas, a busca do produto
+ * @param imagemUrl  foto do produto vinda da loja; nula se não houver
  */
 public record ItemSugerido(Integer presenteId, String nome, String categoria, BigDecimal preco,
                            List<String> motivos, String linkCompra, String imagemUrl) {
@@ -27,10 +27,10 @@ public record ItemSugerido(Integer presenteId, String nome, String categoria, Bi
     public static ItemSugerido de(IdeiaPresente ideia) {
         List<String> motivos = ideia.motivo().isBlank() ? List.of() : List.of(ideia.motivo());
         return new ItemSugerido(null, ideia.nome(), ideia.categoria(), ideia.precoEstimado(), motivos,
-                ideia.linkCompra(), null);
+                ideia.linkCompra(), ideia.imagemUrl());
     }
 
-    public ItemSugerido comLinkCompra(String link) {
-        return new ItemSugerido(presenteId, nome, categoria, preco, motivos, link, imagemUrl);
+    public ItemSugerido naLoja(String link, String imagem) {
+        return new ItemSugerido(presenteId, nome, categoria, preco, motivos, link, imagem);
     }
 }
