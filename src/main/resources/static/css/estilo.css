@@ -602,3 +602,40 @@ legend {
         aspect-ratio: 4 / 3;
     }
 }
+
+/* Nome e foto do produto clicáveis, levando à loja */
+.link-produto {
+    color: inherit;
+    text-decoration: none;
+}
+
+.link-produto:hover .item__titulo,
+.item__titulo .link-produto:hover {
+    color: var(--cor-primaria);
+    text-decoration: underline;
+}
+
+.link-produto .imagem-produto {
+    transition: border-color .15s;
+}
+
+.link-produto:hover .imagem-produto {
+    border-color: var(--cor-primaria);
+}
+
+.link-produto:focus-visible {
+    outline: 2px solid var(--cor-primaria);
+    outline-offset: 2px;
+    border-radius: 10px;
+}
+
+.link-produto:has(> .imagem-produto) {
+    display: block;
+    flex-shrink: 0;
+}
+
+@media (max-width: 760px) {
+    .item--com-imagem > .link-produto {
+        width: 100%;
+    }
+}

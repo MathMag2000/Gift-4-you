@@ -31,15 +31,17 @@ public class SugestaoService {
     private final ComparadorTermos comparador;
     private final GeradorIdeias geradorIdeias;
     private final HistoricoService historicoService;
+    private final LinkBuscaProduto linkBusca;
 
     public SugestaoService(PessoaService pessoaService, PresenteService presenteService,
                            ComparadorTermos comparador, GeradorIdeias geradorIdeias,
-                           HistoricoService historicoService) {
+                           HistoricoService historicoService, LinkBuscaProduto linkBusca) {
         this.pessoaService = pessoaService;
         this.presenteService = presenteService;
         this.comparador = comparador;
         this.geradorIdeias = geradorIdeias;
         this.historicoService = historicoService;
+        this.linkBusca = linkBusca;
     }
 
     /** Gera as sugestões do catálogo e as registra no histórico. */
@@ -61,7 +63,8 @@ public class SugestaoService {
 
     /**
      * Pede ideias à IA e aplica as mesmas regras de orçamento e rejeição do catálogo,
-     * pois o modelo nem sempre respeita as restrições pedidas. As ideias aprovadas vão para o histórico.
+     * pois o modelo nem sempre respeita as restrições pedidas. As ideias aprovadas recebem um link de busca
+     * numa loja e vão para o histórico.
      */
     public ResultadoIdeias gerarIdeiasComIa(int pessoaId) {
         Pessoa pessoa = pessoaService.buscarPorId(pessoaId);
@@ -69,6 +72,7 @@ public class SugestaoService {
         List<IdeiaPresente> aprovadas = recebidas.stream()
                 .filter(ideia -> dentroDoOrcamento(ideia.precoEstimado(), pessoa.getOrcamento()))
                 .filter(ideia -> !rejeitado(pessoa, List.of(ideia.nome(), ideia.categoria())))
+                .map(ideia -> ideia.comLinkCompra(linkBusca.linkPara(ideia.nome())))
                 .toList();
         historicoService.registrar(pessoa, OrigemSugestao.IA, aprovadas.stream().map(ItemSugerido::de).toList());
         return new ResultadoIdeias(aprovadas, recebidas.size() - aprovadas.size());

@@ -1,5 +1,6 @@
 package com.gift4you.config;
 
+import com.gift4you.integracao.BuscaAmazon;
 import com.gift4you.integracao.ExtratorImagemPaginaWeb;
 import com.gift4you.integracao.GeminiGeradorIdeias;
 import com.gift4you.integracao.LeitorImagemHtml;
@@ -15,6 +16,7 @@ import com.gift4you.service.FavoritoValidador;
 import com.gift4you.service.GeradorIdeias;
 import com.gift4you.service.GeradorIdeiasIndisponivel;
 import com.gift4you.service.HistoricoService;
+import com.gift4you.service.LinkBuscaProduto;
 import com.gift4you.service.PessoaService;
 import com.gift4you.service.PessoaValidador;
 import com.gift4you.service.PresenteService;
@@ -69,19 +71,26 @@ public class AplicacaoConfig {
         return historicoService;
     }
 
+    /** Loja usada no link de compra das ideias da IA. */
+    @Bean
+    public LinkBuscaProduto linkBuscaProduto() {
+        return new BuscaAmazon();
+    }
+
     @Bean
     public FavoritoService favoritoService(PessoaService pessoaService, PresenteService presenteService,
-                                           Clock relogio) {
+                                           LinkBuscaProduto linkBuscaProduto, Clock relogio) {
         FavoritoService favoritoService = new FavoritoService(new FavoritoRepositoryEmMemoria(),
-                new FavoritoValidador(), pessoaService, presenteService, relogio);
+                new FavoritoValidador(), pessoaService, presenteService, linkBuscaProduto, relogio);
         pessoaService.adicionarOuvinteRemocao(favoritoService);
         return favoritoService;
     }
 
     @Bean
     public SugestaoService sugestaoService(PessoaService pessoaService, PresenteService presenteService,
-                                           GeradorIdeias geradorIdeias, HistoricoService historicoService) {
+                                           GeradorIdeias geradorIdeias, HistoricoService historicoService,
+                                           LinkBuscaProduto linkBuscaProduto) {
         return new SugestaoService(pessoaService, presenteService, new ComparadorTermos(), geradorIdeias,
-                historicoService);
+                historicoService, linkBuscaProduto);
     }
 }

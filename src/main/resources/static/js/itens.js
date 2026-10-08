@@ -1,6 +1,6 @@
 // Formato comum dos itens sugeridos (catálogo ou IA), usado em sugestões, histórico e favoritos.
 import { descricao } from "./opcoes.js";
-import { escaparHtml, etiquetas, formatarMoeda, imagemProduto, linkCompra } from "./util.js";
+import { comLink, escaparHtml, etiquetas, formatarMoeda, imagemProduto, linkCompra } from "./util.js";
 
 export const CATALOGO = "CATALOGO";
 export const IA = "IA";
@@ -24,7 +24,7 @@ export function itemDeIdeia(ideia) {
         categoria: ideia.categoria,
         preco: ideia.precoEstimado,
         motivos: ideia.motivo ? [ideia.motivo] : [],
-        linkCompra: null,
+        linkCompra: ideia.linkCompra,
         imagemUrl: null,
     };
 }
@@ -47,14 +47,16 @@ export function renderizarItem(item, origem, { posicao, rodape = "", acoes = "" 
     const motivos = ehIa
         ? item.motivos.map((motivo) => `<p class="item__descricao">${escaparHtml(motivo)}</p>`).join("")
         : `<p class="item__descricao">${etiquetas(item.motivos, "etiqueta--motivo")}</p>`;
-    const botoes = linkCompra(item.linkCompra) + acoes;
+    // Ideias da IA levam à busca do produto na loja; itens do catálogo, à página do produto.
+    const botoes = linkCompra(item.linkCompra, ehIa ? "Buscar na Amazon ↗" : "Comprar na loja ↗") + acoes;
+    const imagem = imagemProduto(item.imagemUrl, item.nome, "imagem-produto--destaque");
     return `
         <article class="cartao item sugestao ${ehIa ? "sugestao--ia" : ""}">
-            ${ehIa ? "" : imagemProduto(item.imagemUrl, item.nome, "imagem-produto--destaque")}
+            ${ehIa ? "" : comLink(item.linkCompra, imagem)}
             <div class="item__topo">
                 ${posicao ? `<span class="sugestao__posicao">${posicao}</span>` : ""}
                 <div class="item__info">
-                    <h3 class="item__titulo">${escaparHtml(item.nome)}</h3>
+                    <h3 class="item__titulo">${comLink(item.linkCompra, escaparHtml(item.nome))}</h3>
                     <p class="item__subtitulo">
                         ${escaparHtml(item.categoria)}
                         <span class="etiqueta etiqueta--origem-${origem.toLowerCase()}">${descricao("origens", origem)}</span>

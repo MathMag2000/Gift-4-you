@@ -1,5 +1,6 @@
 package com.gift4you.service;
 
+import com.gift4you.integracao.BuscaAmazon;
 import com.gift4you.model.Categoria;
 import com.gift4you.model.DadosPessoa;
 import com.gift4you.model.DadosPresente;
@@ -39,10 +40,11 @@ class Cenario {
                 return link.contains("sem-imagem") ? Optional.empty() : Optional.of(link + "/foto.jpg");
             });
     final HistoricoService historico = new HistoricoService(new HistoricoRepositoryEmMemoria(), relogio);
+    final LinkBuscaProduto linkBusca = new BuscaAmazon();
     final FavoritoService favoritos = new FavoritoService(new FavoritoRepositoryEmMemoria(), new FavoritoValidador(),
-            pessoas, presentes, relogio);
+            pessoas, presentes, linkBusca, relogio);
     final SugestaoService sugestoes = new SugestaoService(pessoas, presentes, new ComparadorTermos(),
-            (pessoa, quantidade) -> ideiasDaIa, historico);
+            (pessoa, quantidade) -> ideiasDaIa, historico, linkBusca);
 
     Cenario() {
         pessoas.adicionarOuvinteRemocao(historico);
