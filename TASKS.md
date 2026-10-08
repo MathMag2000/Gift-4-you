@@ -45,12 +45,22 @@
 
 ## Sistema de sugestões
 
-* [ ] Criar lógica de geração de sugestões
-* [ ] Filtrar presentes pelo orçamento
-* [ ] Considerar gostos e interesses
-* [ ] Considerar ocasião
-* [ ] Ignorar categorias rejeitadas
-* [ ] Exibir sugestões para o usuário
+* [x] Criar lógica de geração de sugestões
+* [x] Filtrar presentes pelo orçamento
+* [x] Considerar gostos e interesses
+* [x] Considerar ocasião
+* [x] Ignorar categorias rejeitadas
+* [x] Exibir sugestões para o usuário
+* [x] Gerar ideias de presentes com IA (Gemini)
+
+## Interface web
+
+* [x] Converter o projeto para Maven e Spring Boot
+* [x] Criar API REST de pessoas, presentes e sugestões
+* [x] Criar páginas de cadastro de pessoas e presentes
+* [x] Criar página de sugestões (catálogo e IA)
+* [ ] Persistir os dados em banco de dados
+* [ ] Publicar o site
 
 ## Favoritos
 
