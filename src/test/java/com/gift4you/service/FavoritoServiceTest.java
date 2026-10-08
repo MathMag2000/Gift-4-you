@@ -94,6 +94,17 @@ class FavoritoServiceTest {
     }
 
     @Test
+    void ideiaComLinkDeProdutoDaLojaMantemLinkEFoto() {
+        ItemSugerido item = new ItemSugerido(null, "Prensa Francesa", "Cozinha", new BigDecimal("120"), List.of(),
+                "https://www.amazon.com.br/dp/B07WXJ8GQP", "https://m.media-amazon.com/images/I/61abc.jpg");
+
+        Favorito favorito = cenario.favoritos.favoritar(new DadosFavorito(ana.getId(), OrigemSugestao.IA, item));
+
+        assertThat(favorito.getItem().linkCompra()).isEqualTo("https://www.amazon.com.br/dp/B07WXJ8GQP");
+        assertThat(favorito.getItem().imagemUrl()).isEqualTo("https://m.media-amazon.com/images/I/61abc.jpg");
+    }
+
+    @Test
     void mesmoItemPodeSerFavoritoDePessoasDiferentes() {
         Pessoa bruno = cenario.cadastrarPessoa("Bruno", List.of(), List.of());
 

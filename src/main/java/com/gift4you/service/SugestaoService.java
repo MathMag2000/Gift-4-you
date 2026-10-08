@@ -13,6 +13,10 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * Gera sugestões priorizando presentes dentro do orçamento, compatíveis com gostos, interesses
@@ -31,17 +35,17 @@ public class SugestaoService {
     private final ComparadorTermos comparador;
     private final GeradorIdeias geradorIdeias;
     private final HistoricoService historicoService;
-    private final LinkBuscaProduto linkBusca;
+    private final LojaOnline loja;
 
     public SugestaoService(PessoaService pessoaService, PresenteService presenteService,
                            ComparadorTermos comparador, GeradorIdeias geradorIdeias,
-                           HistoricoService historicoService, LinkBuscaProduto linkBusca) {
+                           HistoricoService historicoService, LojaOnline loja) {
         this.pessoaService = pessoaService;
         this.presenteService = presenteService;
         this.comparador = comparador;
         this.geradorIdeias = geradorIdeias;
         this.historicoService = historicoService;
-        this.linkBusca = linkBusca;
+        this.loja = loja;
     }
 
     /** Gera as sugestões do catálogo e as registra no histórico. */
@@ -63,8 +67,8 @@ public class SugestaoService {
 
     /**
      * Pede ideias à IA e aplica as mesmas regras de orçamento e rejeição do catálogo,
-     * pois o modelo nem sempre respeita as restrições pedidas. As ideias aprovadas recebem um link de busca
-     * numa loja e vão para o histórico.
+     * pois o modelo nem sempre respeita as restrições pedidas. Cada ideia aprovada é procurada na loja
+     * para ganhar o link da página do produto, e o resultado vai para o histórico.
      */
     public ResultadoIdeias gerarIdeiasComIa(int pessoaId) {
         Pessoa pessoa = pessoaService.buscarPorId(pessoaId);
@@ -72,10 +76,50 @@ public class SugestaoService {
         List<IdeiaPresente> aprovadas = recebidas.stream()
                 .filter(ideia -> dentroDoOrcamento(ideia.precoEstimado(), pessoa.getOrcamento()))
                 .filter(ideia -> !rejeitado(pessoa, List.of(ideia.nome(), ideia.categoria())))
-                .map(ideia -> ideia.comLinkCompra(linkBusca.linkPara(ideia.nome())))
                 .toList();
-        historicoService.registrar(pessoa, OrigemSugestao.IA, aprovadas.stream().map(ItemSugerido::de).toList());
-        return new ResultadoIdeias(aprovadas, recebidas.size() - aprovadas.size());
+        List<IdeiaPresente> naLoja = procurarNaLoja(pessoa, aprovadas);
+        historicoService.registrar(pessoa, OrigemSugestao.IA, naLoja.stream().map(ItemSugerido::de).toList());
+        return new ResultadoIdeias(naLoja, recebidas.size() - aprovadas.size());
+    }
+
+    /** Procura as ideias ao mesmo tempo, para que o tempo total seja o da busca mais lenta, e não a soma. */
+    private List<IdeiaPresente> procurarNaLoja(Pessoa pessoa, List<IdeiaPresente> ideias) {
+        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            List<Future<IdeiaPresente>> buscas = ideias.stream()
+                    .map(ideia -> executor.submit(() -> procurarNaLoja(pessoa, ideia)))
+                    .toList();
+            List<IdeiaPresente> resultado = new ArrayList<>();
+            for (int i = 0; i < ideias.size(); i++) {
+                resultado.add(aguardar(buscas.get(i), ideias.get(i)));
+            }
+            return resultado;
+        }
+    }
+
+    /**
+     * Usa o produto encontrado na loja, a não ser que ele seja algo que a pessoa não gosta;
+     * sem produto, a ideia fica com o link de busca.
+     */
+    private IdeiaPresente procurarNaLoja(Pessoa pessoa, IdeiaPresente ideia) {
+        return loja.encontrarProduto(ideia.nome())
+                .filter(produto -> !rejeitado(pessoa, List.of(produto.titulo())))
+                .map(produto -> ideia.naLoja(produto.link(), produto.imagemUrl()))
+                .orElseGet(() -> semProduto(ideia));
+    }
+
+    private IdeiaPresente aguardar(Future<IdeiaPresente> busca, IdeiaPresente ideia) {
+        try {
+            return busca.get();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return semProduto(ideia);
+        } catch (ExecutionException e) {
+            return semProduto(ideia);
+        }
+    }
+
+    private IdeiaPresente semProduto(IdeiaPresente ideia) {
+        return ideia.naLoja(loja.linkBusca(ideia.nome()), null);
     }
 
     private SugestaoPresente avaliar(Pessoa pessoa, Presente presente) {

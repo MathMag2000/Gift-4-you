@@ -25,7 +25,7 @@ export function itemDeIdeia(ideia) {
         preco: ideia.precoEstimado,
         motivos: ideia.motivo ? [ideia.motivo] : [],
         linkCompra: ideia.linkCompra,
-        imagemUrl: null,
+        imagemUrl: ideia.imagemUrl,
     };
 }
 
@@ -47,12 +47,14 @@ export function renderizarItem(item, origem, { posicao, rodape = "", acoes = "" 
     const motivos = ehIa
         ? item.motivos.map((motivo) => `<p class="item__descricao">${escaparHtml(motivo)}</p>`).join("")
         : `<p class="item__descricao">${etiquetas(item.motivos, "etiqueta--motivo")}</p>`;
-    // Ideias da IA levam à busca do produto na loja; itens do catálogo, à página do produto.
-    const botoes = linkCompra(item.linkCompra, ehIa ? "Buscar na Amazon ↗" : "Comprar na loja ↗") + acoes;
+    // Ideias da IA levam ao produto encontrado na Amazon (ou à busca, se ele não foi encontrado).
+    const botoes = linkCompra(item.linkCompra, ehIa ? "Ver na Amazon ↗" : "Comprar na loja ↗") + acoes;
+    // Ideias da IA sem produto encontrado não têm foto: em vez do ícone, o cartão fica sem imagem.
+    const mostrarImagem = !ehIa || item.imagemUrl;
     const imagem = imagemProduto(item.imagemUrl, item.nome, "imagem-produto--destaque");
     return `
         <article class="cartao item sugestao ${ehIa ? "sugestao--ia" : ""}">
-            ${ehIa ? "" : comLink(item.linkCompra, imagem)}
+            ${mostrarImagem ? comLink(item.linkCompra, imagem) : ""}
             <div class="item__topo">
                 ${posicao ? `<span class="sugestao__posicao">${posicao}</span>` : ""}
                 <div class="item__info">
