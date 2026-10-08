@@ -4,6 +4,13 @@ export function formatarMoeda(valor) {
     return formatoMoeda.format(valor);
 }
 
+const formatoDataHora = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" });
+
+/** Recebe a data no formato do servidor (ex.: 2026-10-08T17:15:03). */
+export function formatarDataHora(texto) {
+    return formatoDataHora.format(new Date(texto));
+}
+
 /** Evita que textos digitados pelo usuário sejam interpretados como HTML. */
 export function escaparHtml(texto) {
     return String(texto ?? "")

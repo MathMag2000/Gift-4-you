@@ -1,28 +1,28 @@
 import { api } from "./api.js";
+import { atualizarBotaoFavoritar, EstadoFavoritos } from "./favoritar.js";
+import { botaoFavoritar, CATALOGO, IA, itemDeIdeia, itemDeSugestao, renderizarItem } from "./itens.js";
 import { descricao } from "./opcoes.js";
-import { escaparHtml, etiquetas, formatarMoeda, mostrarErro } from "./util.js";
+import { preencherSeletorPessoas } from "./seletor-pessoas.js";
+import { escaparHtml, formatarMoeda, mostrarAviso, mostrarErro } from "./util.js";
 
 const seletorPessoa = document.getElementById("pessoa-sugestao");
 const resultado = document.getElementById("resultado-sugestoes");
 const botaoCatalogo = document.getElementById("botao-sugestoes-catalogo");
 const botaoIa = document.getElementById("botao-ideias-ia");
+const favoritos = new EstadoFavoritos();
 let pessoas = [];
+let exibidos = { pessoaId: null, origem: null, itens: [] };
 
 export function iniciarSugestoes() {
     botaoCatalogo.addEventListener("click", sugerirDoCatalogo);
     botaoIa.addEventListener("click", sugerirComIa);
+    resultado.addEventListener("click", favoritarItem);
 }
 
 /** Recarrega as pessoas, pois podem ter sido alteradas na aba Pessoas. */
 export async function atualizarPessoas() {
-    const selecionada = seletorPessoa.value;
     pessoas = await api.listarPessoas();
-    seletorPessoa.innerHTML = pessoas.length === 0
-        ? `<option value="">Cadastre uma pessoa primeiro</option>`
-        : pessoas.map((pessoa) => `<option value="${pessoa.id}">${escaparHtml(pessoa.nome)}</option>`).join("");
-    if (pessoas.some((pessoa) => String(pessoa.id) === selecionada)) {
-        seletorPessoa.value = selecionada;
-    }
+    preencherSeletorPessoas(seletorPessoa, pessoas);
     botaoCatalogo.disabled = botaoIa.disabled = pessoas.length === 0;
 }
 
@@ -40,6 +40,15 @@ function cabecalho(pessoa, titulo) {
         </div>`;
 }
 
+function renderizarItens(pessoa, origem, itens) {
+    exibidos = { pessoaId: pessoa.id, origem, itens };
+    const cartoes = itens.map((item, indice) => renderizarItem(item, origem, {
+        posicao: indice + 1,
+        acoes: botaoFavoritar(indice, favoritos.estaFavoritado(pessoa.id, origem, item)),
+    })).join("");
+    return `<div class="grade-sugestoes">${cartoes}</div>`;
+}
+
 async function executar(mensagemCarregando, acao) {
     const pessoa = pessoaSelecionada();
     if (!pessoa) {
@@ -48,6 +57,7 @@ async function executar(mensagemCarregando, acao) {
     botaoCatalogo.disabled = botaoIa.disabled = true;
     resultado.innerHTML = `<p class="carregando">${mensagemCarregando}</p>`;
     try {
+        await favoritos.carregar(pessoa.id);
         resultado.innerHTML = await acao(pessoa);
     } catch (erro) {
         resultado.innerHTML = "";
@@ -59,44 +69,19 @@ async function executar(mensagemCarregando, acao) {
 
 function sugerirDoCatalogo() {
     return executar("Buscando no catálogo...", async (pessoa) => {
-        const sugestoes = await api.sugestoesDoCatalogo(pessoa.id);
-        if (sugestoes.length === 0) {
+        const itens = (await api.sugestoesDoCatalogo(pessoa.id)).map(itemDeSugestao);
+        if (itens.length === 0) {
             return cabecalho(pessoa, "Sugestões do catálogo") + `
                 <p class="vazio">Nenhum presente do catálogo atende a este perfil.
                 Cadastre mais presentes ou experimente as ideias com IA.</p>`;
         }
-        const cartoes = sugestoes.map(({ presente, motivos }, indice) => `
-            <article class="cartao item sugestao">
-                <div class="item__topo">
-                    <span class="sugestao__posicao">${indice + 1}</span>
-                    <div class="item__info">
-                        <h3 class="item__titulo">${escaparHtml(presente.nome)}</h3>
-                        <p class="item__subtitulo">${escaparHtml(descricao("categorias", presente.categoria))}</p>
-                    </div>
-                    <span class="item__preco">${formatarMoeda(presente.preco)}</span>
-                </div>
-                <p class="item__descricao">${etiquetas(motivos, "etiqueta--motivo")}</p>
-            </article>`).join("");
-        return cabecalho(pessoa, "Sugestões do catálogo") + `<div class="grade-sugestoes">${cartoes}</div>`;
+        return cabecalho(pessoa, "Sugestões do catálogo") + renderizarItens(pessoa, CATALOGO, itens);
     });
 }
 
 function sugerirComIa() {
     return executar("Consultando o Gemini, isso pode levar alguns segundos...", async (pessoa) => {
         const { ideias, descartadas } = await api.ideiasComIa(pessoa.id);
-        const cartoes = ideias.map((ideia, indice) => `
-            <article class="cartao item sugestao sugestao--ia">
-                <div class="item__topo">
-                    <span class="sugestao__posicao">${indice + 1}</span>
-                    <div class="item__info">
-                        <h3 class="item__titulo">${escaparHtml(ideia.nome)}</h3>
-                        <p class="item__subtitulo">${escaparHtml(ideia.categoria)}</p>
-                    </div>
-                    <span class="item__preco">≈ ${formatarMoeda(ideia.precoEstimado)}</span>
-                </div>
-                <p class="item__descricao">${escaparHtml(ideia.motivo)}</p>
-            </article>`).join("");
-
         const vazio = ideias.length === 0
             ? `<p class="vazio">A IA não retornou ideias dentro do orçamento e das restrições. Tente novamente.</p>`
             : "";
@@ -105,7 +90,25 @@ function sugerirComIa() {
                ou relacionadas ao que a pessoa não gosta. `
             : "";
         return cabecalho(pessoa, "Ideias com IA") + vazio
-            + `<div class="grade-sugestoes">${cartoes}</div>`
+            + renderizarItens(pessoa, IA, ideias.map(itemDeIdeia))
             + `<p class="nota">${avisoDescartadas}Preços estimados pela IA; confira antes de comprar.</p>`;
     });
+}
+
+async function favoritarItem(evento) {
+    const botao = evento.target.closest('button[data-acao="favoritar"]');
+    if (!botao) {
+        return;
+    }
+    const item = exibidos.itens[Number(botao.dataset.indice)];
+    botao.disabled = true;
+    try {
+        const favoritado = await favoritos.alternar(exibidos.pessoaId, exibidos.origem, item);
+        atualizarBotaoFavoritar(botao, favoritado);
+        mostrarAviso(favoritado ? "Adicionado aos favoritos." : "Removido dos favoritos.");
+    } catch (erro) {
+        mostrarErro(erro);
+    } finally {
+        botao.disabled = false;
+    }
 }

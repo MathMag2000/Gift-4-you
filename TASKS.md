@@ -64,15 +64,15 @@
 
 ## Favoritos
 
-* [ ] Permitir favoritar presentes
-* [ ] Permitir remover dos favoritos
-* [ ] Listar presentes favoritos
+* [x] Permitir favoritar presentes
+* [x] Permitir remover dos favoritos
+* [x] Listar presentes favoritos
 
 ## Histórico
 
-* [ ] Registrar sugestões realizadas
-* [ ] Consultar histórico
-* [ ] Permitir visualizar sugestões anteriores
+* [x] Registrar sugestões realizadas
+* [x] Consultar histórico
+* [x] Permitir visualizar sugestões anteriores
 
 ## Validações
 
@@ -90,8 +90,8 @@
 * [ ] Testar cadastro de presente
 * [ ] Testar filtros de orçamento
 * [ ] Testar geração de sugestões
-* [ ] Testar favoritos
-* [ ] Testar histórico
+* [x] Testar favoritos
+* [x] Testar histórico
 
 ## Documentação
 
