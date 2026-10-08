@@ -22,6 +22,7 @@ public class FavoritoValidador extends ValidadorBase {
 
     /**
      * Valida uma ideia da IA, que só existe nos dados enviados, e devolve uma cópia normalizada.
+     * Link e imagem enviados são descartados: ideias da IA não vêm de uma loja.
      */
     public ItemSugerido validarIdeia(ItemSugerido item) {
         String nome = exigirTexto(item.nome(), "O nome da ideia é obrigatório.");
@@ -32,6 +33,6 @@ public class FavoritoValidador extends ValidadorBase {
         String categoria = item.categoria() == null ? "" : item.categoria().trim();
         List<String> motivos = item.motivos() == null ? List.of()
                 : item.motivos().stream().filter(Objects::nonNull).map(String::trim).filter(m -> !m.isEmpty()).toList();
-        return new ItemSugerido(null, nome, categoria, item.preco(), motivos);
+        return new ItemSugerido(null, nome, categoria, item.preco(), motivos, null, null);
     }
 }

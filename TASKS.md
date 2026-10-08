@@ -42,6 +42,8 @@
 * [x] Implementar remoção de presentes
 * [x] Adicionar categorias de presentes
 * [x] Adicionar preço dos presentes
+* [x] Adicionar link para compra na loja
+* [x] Buscar a imagem do produto na página do link de compra
 
 ## Sistema de sugestões
 

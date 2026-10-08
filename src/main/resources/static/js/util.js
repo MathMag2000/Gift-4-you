@@ -21,6 +21,32 @@ export function escaparHtml(texto) {
         .replaceAll("'", "&#39;");
 }
 
+/** Só aceita endereços http(s), evitando links como "javascript:" mesmo que cheguem do servidor. */
+export function urlSegura(url) {
+    return typeof url === "string" && /^https?:\/\//i.test(url) ? url : null;
+}
+
+/**
+ * Imagem do produto vinda da loja. Sem imagem, ou se ela não carregar, mostra um ícone no lugar
+ * (ver o tratamento de erro de imagens em app.js).
+ */
+export function imagemProduto(url, descricao, classeExtra = "") {
+    const endereco = urlSegura(url);
+    if (!endereco) {
+        return `<div class="imagem-produto imagem-produto--vazia ${classeExtra}" aria-hidden="true">🎁</div>`;
+    }
+    return `<img class="imagem-produto ${classeExtra}" src="${escaparHtml(endereco)}" alt="${escaparHtml(descricao)}"
+                 loading="lazy" referrerpolicy="no-referrer">`;
+}
+
+export function linkCompra(url, texto = "Comprar na loja ↗") {
+    const endereco = urlSegura(url);
+    return endereco
+        ? `<a class="botao botao--comprar botao--pequeno" href="${escaparHtml(endereco)}" target="_blank"
+              rel="noopener noreferrer">${texto}</a>`
+        : "";
+}
+
 export function textoParaLista(texto) {
     return texto.split(",").map((item) => item.trim()).filter(Boolean);
 }

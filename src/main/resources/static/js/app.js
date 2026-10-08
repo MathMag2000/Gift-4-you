@@ -23,7 +23,22 @@ function abrirSecao(nome) {
     aoAbrir[nome]?.().catch(mostrarErro);
 }
 
+/** Imagens de lojas podem sair do ar ou bloquear o acesso: troca pelo ícone padrão. */
+function substituirImagensComErro() {
+    document.addEventListener("error", (evento) => {
+        const imagem = evento.target;
+        if (imagem instanceof HTMLImageElement && imagem.classList.contains("imagem-produto")) {
+            const icone = document.createElement("div");
+            icone.className = `${imagem.className} imagem-produto--vazia`;
+            icone.setAttribute("aria-hidden", "true");
+            icone.textContent = "🎁";
+            imagem.replaceWith(icone);
+        }
+    }, true);
+}
+
 async function iniciar() {
+    substituirImagensComErro();
     abas.forEach((aba) => aba.addEventListener("click", () => abrirSecao(aba.dataset.secao)));
     try {
         await carregarOpcoes();
