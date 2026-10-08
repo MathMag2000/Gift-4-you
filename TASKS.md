@@ -42,27 +42,41 @@
 * [x] Implementar remoção de presentes
 * [x] Adicionar categorias de presentes
 * [x] Adicionar preço dos presentes
+* [x] Adicionar link para compra na loja
+* [x] Buscar a imagem do produto na página do link de compra
 
 ## Sistema de sugestões
 
-* [ ] Criar lógica de geração de sugestões
-* [ ] Filtrar presentes pelo orçamento
-* [ ] Considerar gostos e interesses
-* [ ] Considerar ocasião
-* [ ] Ignorar categorias rejeitadas
-* [ ] Exibir sugestões para o usuário
+* [x] Criar lógica de geração de sugestões
+* [x] Filtrar presentes pelo orçamento
+* [x] Considerar gostos e interesses
+* [x] Considerar ocasião
+* [x] Ignorar categorias rejeitadas
+* [x] Exibir sugestões para o usuário
+* [x] Gerar ideias de presentes com IA (Gemini)
+* [x] Adicionar link de compra (busca na Amazon) nas ideias da IA
+* [x] Encontrar o produto de cada ideia da IA na Amazon (link da página e foto)
+
+## Interface web
+
+* [x] Converter o projeto para Maven e Spring Boot
+* [x] Criar API REST de pessoas, presentes e sugestões
+* [x] Criar páginas de cadastro de pessoas e presentes
+* [x] Criar página de sugestões (catálogo e IA)
+* [ ] Persistir os dados em banco de dados
+* [ ] Publicar o site
 
 ## Favoritos
 
-* [ ] Permitir favoritar presentes
-* [ ] Permitir remover dos favoritos
-* [ ] Listar presentes favoritos
+* [x] Permitir favoritar presentes
+* [x] Permitir remover dos favoritos
+* [x] Listar presentes favoritos
 
 ## Histórico
 
-* [ ] Registrar sugestões realizadas
-* [ ] Consultar histórico
-* [ ] Permitir visualizar sugestões anteriores
+* [x] Registrar sugestões realizadas
+* [x] Consultar histórico
+* [x] Permitir visualizar sugestões anteriores
 
 ## Validações
 
@@ -80,8 +94,8 @@
 * [ ] Testar cadastro de presente
 * [ ] Testar filtros de orçamento
 * [ ] Testar geração de sugestões
-* [ ] Testar favoritos
-* [ ] Testar histórico
+* [x] Testar favoritos
+* [x] Testar histórico
 
 ## Documentação
 

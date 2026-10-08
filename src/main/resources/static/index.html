@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Gift 4 You - Sugestões de presentes</title>
+    <link rel="stylesheet" href="css/estilo.css">
+    <script type="module" src="js/app.js"></script>
+</head>
+<body>
+<header class="topo">
+    <div class="topo__conteudo">
+        <h1 class="marca">🎁 Gift 4 You</h1>
+        <nav class="abas" aria-label="Seções">
+            <button class="aba aba--ativa" data-secao="pessoas" type="button">Pessoas</button>
+            <button class="aba" data-secao="presentes" type="button">Presentes</button>
+            <button class="aba" data-secao="sugestoes" type="button">Sugestões</button>
+            <button class="aba" data-secao="favoritos" type="button">Favoritos</button>
+            <button class="aba" data-secao="historico" type="button">Histórico</button>
+        </nav>
+    </div>
+</header>
+
+<main class="conteudo">
+    <!-- Pessoas -->
+    <section id="secao-pessoas" class="secao secao--ativa">
+        <div class="grade">
+            <form id="form-pessoa" class="cartao formulario" novalidate>
+                <h2 id="titulo-form-pessoa">Cadastrar pessoa</h2>
+
+                <label>Nome
+                    <input name="nome" type="text" maxlength="100" autocomplete="off">
+                </label>
+                <div class="linha">
+                    <label>Idade
+                        <input name="idade" type="number" min="0" max="120">
+                    </label>
+                    <label>Vínculo
+                        <select name="vinculo" data-opcoes="vinculos"></select>
+                    </label>
+                </div>
+                <label>Gostos <small>separados por vírgula</small>
+                    <input name="gostos" type="text" placeholder="ex.: música, café, livros">
+                </label>
+                <label>Interesses <small>separados por vírgula</small>
+                    <input name="interesses" type="text" placeholder="ex.: viagem, fotografia">
+                </label>
+                <label>Não gosta <small>itens ou categorias, separados por vírgula</small>
+                    <input name="naoGosta" type="text" placeholder="ex.: perfume, eletrônicos">
+                </label>
+                <label>Ocasião
+                    <select name="ocasiao" data-opcoes="ocasioes"></select>
+                </label>
+                <label>Orçamento máximo (R$)
+                    <input name="orcamentoMaximo" type="number" min="0" step="0.01">
+                </label>
+
+                <div class="acoes">
+                    <button type="submit" class="botao botao--primario">Cadastrar</button>
+                    <button type="button" class="botao botao--secundario" data-acao="cancelar" hidden>Cancelar</button>
+                </div>
+            </form>
+
+            <div>
+                <h2>Pessoas cadastradas</h2>
+                <div id="lista-pessoas" class="lista"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Presentes -->
+    <section id="secao-presentes" class="secao">
+        <div class="grade">
+            <form id="form-presente" class="cartao formulario" novalidate>
+                <h2 id="titulo-form-presente">Cadastrar presente</h2>
+
+                <label>Nome
+                    <input name="nome" type="text" maxlength="100" autocomplete="off">
+                </label>
+                <div class="linha">
+                    <label>Categoria
+                        <select name="categoria" data-opcoes="categorias"></select>
+                    </label>
+                    <label>Preço (R$)
+                        <input name="preco" type="number" min="0" step="0.01">
+                    </label>
+                </div>
+                <label>Link para compra
+                    <small>a foto do produto é buscada automaticamente nesta página</small>
+                    <input name="linkCompra" type="url" placeholder="https://www.loja.com.br/produto..."
+                           autocomplete="off">
+                </label>
+                <label>Descrição <small>opcional</small>
+                    <textarea name="descricao" rows="2"></textarea>
+                </label>
+                <label>Características <small>separadas por vírgula</small>
+                    <input name="caracteristicas" type="text" placeholder="ex.: música, tecnologia, sem fio">
+                </label>
+                <fieldset>
+                    <legend>Ocasiões compatíveis</legend>
+                    <div id="ocasioes-presente" class="opcoes-marcar"></div>
+                </fieldset>
+
+                <div class="acoes">
+                    <button type="submit" class="botao botao--primario">Cadastrar</button>
+                    <button type="button" class="botao botao--secundario" data-acao="cancelar" hidden>Cancelar</button>
+                </div>
+            </form>
+
+            <div>
+                <h2>Catálogo de presentes</h2>
+                <div id="lista-presentes" class="lista"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sugestões -->
+    <section id="secao-sugestoes" class="secao">
+        <div class="cartao painel-sugestoes">
+            <h2>Sugestões de presentes</h2>
+            <label>Para quem é o presente?
+                <select id="pessoa-sugestao"></select>
+            </label>
+            <div class="acoes">
+                <button id="botao-sugestoes-catalogo" type="button" class="botao botao--primario">
+                    Sugestões do catálogo
+                </button>
+                <button id="botao-ideias-ia" type="button" class="botao botao--ia">
+                    ✨ Ideias com IA (Gemini)
+                </button>
+            </div>
+        </div>
+        <div id="resultado-sugestoes"></div>
+    </section>
+
+    <!-- Favoritos -->
+    <section id="secao-favoritos" class="secao">
+        <div class="cabecalho-secao">
+            <h2>Presentes favoritos</h2>
+            <label class="filtro">Pessoa
+                <select id="filtro-favoritos"></select>
+            </label>
+        </div>
+        <div id="lista-favoritos" class="grade-sugestoes"></div>
+    </section>
+
+    <!-- Histórico -->
+    <section id="secao-historico" class="secao">
+        <div class="cabecalho-secao">
+            <h2>Histórico de sugestões</h2>
+            <label class="filtro">Pessoa
+                <select id="filtro-historico"></select>
+            </label>
+        </div>
+        <div id="lista-historico" class="lista"></div>
+    </section>
+</main>
+
+<div id="aviso" class="aviso" role="status" aria-live="polite" hidden></div>
+</body>
+</html>
