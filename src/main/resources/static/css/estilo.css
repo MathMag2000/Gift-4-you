@@ -384,6 +384,11 @@ legend {
     gap: .75rem;
 }
 
+/* Sem esta regra, o display: grid acima vence o atributo hidden e a grade nunca some. */
+.grade-sugestoes[hidden] {
+    display: none;
+}
+
 .sugestao__posicao {
     display: inline-grid;
     place-items: center;

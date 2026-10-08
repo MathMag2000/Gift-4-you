@@ -44,13 +44,13 @@ class Cenario {
                 return link.contains("sem-imagem") ? Optional.empty() : Optional.of(link + "/foto.jpg");
             });
     final HistoricoService historico = new HistoricoService(new HistoricoRepositoryEmMemoria(), relogio);
-    /** Produtos que a loja falsa "encontra", pelo nome da ideia. Nomes ausentes simulam produto não encontrado. */
-    final Map<String, ProdutoLoja> produtosNaLoja = new HashMap<>();
+    /** Resultados que a loja falsa "encontra", pelo nome da ideia. Nomes ausentes simulam produto não encontrado. */
+    final Map<String, List<ProdutoLoja>> produtosNaLoja = new HashMap<>();
     /** Amazon real nos links e validações, mas sem acessar a internet na busca. */
     final LojaOnline loja = new LojaAmazon(new LeitorBuscaAmazon()) {
         @Override
-        public Optional<ProdutoLoja> encontrarProduto(String nomeProduto) {
-            return Optional.ofNullable(produtosNaLoja.get(nomeProduto));
+        public List<ProdutoLoja> encontrarProdutos(String nomeProduto) {
+            return produtosNaLoja.getOrDefault(nomeProduto, List.of());
         }
     };
     final FavoritoService favoritos = new FavoritoService(new FavoritoRepositoryEmMemoria(), new FavoritoValidador(),
@@ -65,7 +65,7 @@ class Cenario {
 
     Pessoa cadastrarPessoa(String nome, List<String> gostos, List<String> naoGosta) {
         return pessoas.cadastrar(new DadosPessoa(nome, 30, Vinculo.AMIGO, gostos, List.of(), naoGosta,
-                Ocasiao.ANIVERSARIO, new FaixaOrcamento(new BigDecimal("50"), new BigDecimal("200"))));
+                Ocasiao.ANIVERSARIO, new FaixaOrcamento(new BigDecimal("200"))));
     }
 
     Presente cadastrarPresente(String nome, Categoria categoria, String preco, List<String> caracteristicas) {

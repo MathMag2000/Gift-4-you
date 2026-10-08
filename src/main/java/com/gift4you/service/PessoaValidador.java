@@ -42,13 +42,9 @@ public class PessoaValidador extends ValidadorBase {
 
     private void validarOrcamento(FaixaOrcamento orcamento) {
         exigir(orcamento, "A faixa de orçamento é obrigatória.");
-        exigir(orcamento.minimo(), "O orçamento mínimo é obrigatório.");
         exigir(orcamento.maximo(), "O orçamento máximo é obrigatório.");
-        if (orcamento.minimo().signum() < 0 || orcamento.maximo().signum() < 0) {
-            throw new ValidacaoException("O orçamento não pode ser negativo.");
-        }
-        if (orcamento.minimo().compareTo(orcamento.maximo()) > 0) {
-            throw new ValidacaoException("O orçamento mínimo não pode ser maior que o máximo.");
+        if (orcamento.maximo().signum() <= 0) {
+            throw new ValidacaoException("O orçamento máximo deve ser maior que zero.");
         }
     }
 

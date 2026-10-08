@@ -32,11 +32,10 @@ function pessoaSelecionada() {
 
 function cabecalho(pessoa, titulo) {
     const ocasiao = descricao("ocasioes", pessoa.ocasiao);
-    const orcamento = `${formatarMoeda(pessoa.orcamento.minimo)} a ${formatarMoeda(pessoa.orcamento.maximo)}`;
     return `
         <div class="resultado__cabecalho">
             <h2>${titulo} para ${escaparHtml(pessoa.nome)}</h2>
-            <p>${escaparHtml(ocasiao)} · orçamento de ${orcamento}</p>
+            <p>${escaparHtml(ocasiao)} · orçamento de até ${formatarMoeda(pessoa.orcamento.maximo)}</p>
         </div>`;
 }
 

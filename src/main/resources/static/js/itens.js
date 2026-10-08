@@ -49,8 +49,10 @@ export function renderizarItem(item, origem, { posicao, rodape = "", acoes = "" 
         : `<p class="item__descricao">${etiquetas(item.motivos, "etiqueta--motivo")}</p>`;
     // Ideias da IA levam ao produto encontrado na Amazon (ou à busca, se ele não foi encontrado).
     const botoes = linkCompra(item.linkCompra, ehIa ? "Ver na Amazon ↗" : "Comprar na loja ↗") + acoes;
-    // Ideias da IA sem produto encontrado não têm foto: em vez do ícone, o cartão fica sem imagem.
+    // Ideias da IA sem produto encontrado não têm foto: em vez do ícone, o cartão fica sem imagem,
+    // e o preço é a estimativa da IA (com produto, nome e preço são os da loja).
     const mostrarImagem = !ehIa || item.imagemUrl;
+    const precoEstimado = !mostrarImagem;
     const imagem = imagemProduto(item.imagemUrl, item.nome, "imagem-produto--destaque");
     return `
         <article class="cartao item sugestao ${ehIa ? "sugestao--ia" : ""}">
@@ -64,7 +66,7 @@ export function renderizarItem(item, origem, { posicao, rodape = "", acoes = "" 
                         <span class="etiqueta etiqueta--origem-${origem.toLowerCase()}">${descricao("origens", origem)}</span>
                     </p>
                 </div>
-                <span class="item__preco">${ehIa ? "≈ " : ""}${formatarMoeda(item.preco)}</span>
+                <span class="item__preco">${precoEstimado ? "≈ " : ""}${formatarMoeda(item.preco)}</span>
             </div>
             ${item.motivos.length ? motivos : ""}
             ${rodape}
