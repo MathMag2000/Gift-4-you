@@ -51,7 +51,7 @@ function renderizar() {
                     </h3>
                     <p class="item__subtitulo">
                         ${formatarDataHora(registro.realizadoEm)} · ${escaparHtml(descricao("ocasioes", registro.ocasiao))}
-                        · ${formatarMoeda(registro.orcamento.minimo)} a ${formatarMoeda(registro.orcamento.maximo)}
+                        · até ${formatarMoeda(registro.orcamento.maximo)}
                     </p>
                 </div>
                 <span class="registro__resumo">${resumo(registro)}</span>

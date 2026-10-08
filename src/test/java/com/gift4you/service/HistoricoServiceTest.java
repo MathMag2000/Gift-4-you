@@ -72,7 +72,7 @@ class HistoricoServiceTest {
     void registraMesmoQuandoNenhumaSugestaoEEncontrada() {
         Pessoa semAfinidade = cenario.pessoas.cadastrar(new DadosPessoa("Caio", 20, Vinculo.IRMAO, List.of(),
                 List.of(), List.of(), Ocasiao.FORMATURA,
-                new FaixaOrcamento(new BigDecimal("1000"), new BigDecimal("2000"))));
+                new FaixaOrcamento(new BigDecimal("2000"))));
 
         cenario.sugestoes.gerarSugestoes(semAfinidade.getId());
 
@@ -85,11 +85,11 @@ class HistoricoServiceTest {
         cenario.sugestoes.gerarSugestoes(ana.getId());
 
         cenario.pessoas.alterar(ana.getId(), new DadosPessoa("Ana", 30, Vinculo.AMIGO, List.of("café"), List.of(),
-                List.of(), Ocasiao.NATAL, new FaixaOrcamento(new BigDecimal("10"), new BigDecimal("20"))));
+                List.of(), Ocasiao.NATAL, new FaixaOrcamento(new BigDecimal("20"))));
 
         RegistroHistorico registro = cenario.historico.listar(ana.getId()).getFirst();
         assertThat(registro.getOcasiao()).isEqualTo(Ocasiao.ANIVERSARIO);
-        assertThat(registro.getOrcamento().minimo()).isEqualByComparingTo("50");
+        assertThat(registro.getOrcamento().maximo()).isEqualByComparingTo("200");
     }
 
     @Test

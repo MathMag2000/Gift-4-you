@@ -45,7 +45,7 @@ class ApiFavoritosHistoricoTest {
 
         enviar("/api/pessoas", """
                 {"nome":"Ana","idade":30,"vinculo":"AMIGO","gostos":["café"],"interesses":[],"naoGosta":[],
-                 "ocasiao":"ANIVERSARIO","orcamento":{"minimo":50,"maximo":200}}""");
+                 "ocasiao":"ANIVERSARIO","orcamento":{"maximo":200}}""");
         enviar("/api/presentes", """
                 {"nome":"Kit de café","categoria":"GASTRONOMIA","descricao":"","preco":90,
                  "caracteristicas":["café"],"ocasioes":["ANIVERSARIO"],

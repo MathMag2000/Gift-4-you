@@ -13,7 +13,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.Optional;
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -48,7 +48,7 @@ public class LojaAmazon implements LojaOnline {
     }
 
     @Override
-    public Optional<ProdutoLoja> encontrarProduto(String nomeProduto) {
+    public List<ProdutoLoja> encontrarProdutos(String nomeProduto) {
         try {
             HttpResponse<InputStream> resposta = cliente.send(
                     RequisicaoNavegador.paginaHtml(URI.create(linkBusca(nomeProduto)), TEMPO_LIMITE),
@@ -56,22 +56,22 @@ public class LojaAmazon implements LojaOnline {
             try (InputStream corpo = resposta.body()) {
                 if (resposta.statusCode() != 200) {
                     LOG.info("Busca na Amazon por \"{}\" respondeu {}", nomeProduto, resposta.statusCode());
-                    return Optional.empty();
+                    return List.of();
                 }
                 String html = new String(corpo.readNBytes(TAMANHO_MAXIMO_PAGINA), StandardCharsets.UTF_8);
-                Optional<ProdutoLoja> produto = leitor.primeiroProduto(html);
-                if (produto.isEmpty()) {
+                List<ProdutoLoja> produtos = leitor.produtos(html);
+                if (produtos.isEmpty()) {
                     LOG.info("Nenhum produto lido na busca da Amazon por \"{}\" (página mudou ou foi bloqueada)",
                             nomeProduto);
                 }
-                return produto;
+                return produtos;
             }
         } catch (IOException e) {
             LOG.info("Não foi possível consultar a Amazon por \"{}\": {}", nomeProduto, e.getMessage());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-        return Optional.empty();
+        return List.of();
     }
 
     @Override

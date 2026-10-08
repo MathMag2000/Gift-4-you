@@ -2,6 +2,7 @@ package com.gift4you.integracao;
 
 import com.gift4you.model.ProdutoLoja;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -26,11 +27,10 @@ public class LeitorBuscaAmazon {
             "<img[^>]*class=\"s-image\"[^>]*src=\"([^\"]+)\"|<img[^>]*src=\"([^\"]+)\"[^>]*class=\"s-image\"");
     /** Sufixo de tamanho das imagens da Amazon (ex.: ._AC_UL320_); sem ele, vem a imagem original. */
     private static final Pattern TAMANHO_IMAGEM = Pattern.compile("\\._[^/]*_\\.(jpg|jpeg|png|webp)$");
+    /** O primeiro preço do resultado é o atual; o "de" riscado vem depois. */
+    private static final Pattern PRECO = Pattern.compile(
+            "<span class=\"a-offscreen\">R\\$(?:\\s|&nbsp;|\\u00a0)*([\\d.]+,\\d{2})</span>");
     private static final int TAMANHO_MAXIMO_BLOCO = 60_000;
-
-    public Optional<ProdutoLoja> primeiroProduto(String html) {
-        return produtos(html).stream().findFirst();
-    }
 
     /** Produtos da página, na ordem da busca, sem os anúncios patrocinados. */
     public List<ProdutoLoja> produtos(String html) {
@@ -60,7 +60,13 @@ public class LeitorBuscaAmazon {
         String imagem = primeiroGrupo(IMAGEM.matcher(bloco))
                 .map(endereco -> TAMANHO_IMAGEM.matcher(endereco).replaceFirst(".$1"))
                 .orElse(null);
-        return Optional.of(new ProdutoLoja(titulo, ENDERECO_PRODUTO + asin.group(1), imagem));
+        BigDecimal preco = primeiroGrupo(PRECO.matcher(bloco)).map(this::converterPreco).orElse(null);
+        return Optional.of(new ProdutoLoja(titulo, ENDERECO_PRODUTO + asin.group(1), imagem, preco));
+    }
+
+    /** Converte o formato brasileiro (1.234,56) para número. */
+    private BigDecimal converterPreco(String texto) {
+        return new BigDecimal(texto.replace(".", "").replace(',', '.'));
     }
 
     private Optional<String> primeiroGrupo(Matcher matcher) {

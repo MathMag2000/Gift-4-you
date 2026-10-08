@@ -71,7 +71,8 @@ public class GeminiGeradorIdeias implements GeradorIdeias {
                 Sugira %d ideias de presentes diferentes para a pessoa descrita abaixo.
 
                 Regras:
-                - O preço estimado, em reais, deve estar entre %s e %s.
+                - O preço estimado, em reais, deve ser de no máximo %s.
+                - O nome deve ser o de um produto específico, fácil de encontrar numa loja online.
                 - %s
                 - O presente deve ser adequado para a ocasião e para o vínculo.
                 - Priorize os gostos e interesses informados.
@@ -84,7 +85,7 @@ public class GeminiGeradorIdeias implements GeradorIdeias {
                 - Interesses: %s
                 - Ocasião: %s
                 """.formatted(quantidade,
-                pessoa.getOrcamento().minimo().toPlainString(), pessoa.getOrcamento().maximo().toPlainString(),
+                pessoa.getOrcamento().maximo().toPlainString(),
                 pessoa.getNaoGosta().isEmpty() ? "Não há itens a evitar."
                         : "Não sugira nada relacionado a: " + String.join(", ", pessoa.getNaoGosta()) + ".",
                 pessoa.getIdade(), pessoa.getVinculo(),

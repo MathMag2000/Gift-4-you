@@ -97,13 +97,15 @@ public class SugestaoService {
     }
 
     /**
-     * Usa o produto encontrado na loja, a não ser que ele seja algo que a pessoa não gosta;
-     * sem produto, a ideia fica com o link de busca.
+     * Usa o primeiro produto da busca com preço dentro do orçamento e que não seja algo que a pessoa
+     * não gosta, assumindo o nome e o preço dele; sem produto, a ideia fica com o link de busca.
      */
     private IdeiaPresente procurarNaLoja(Pessoa pessoa, IdeiaPresente ideia) {
-        return loja.encontrarProduto(ideia.nome())
+        return loja.encontrarProdutos(ideia.nome()).stream()
+                .filter(produto -> dentroDoOrcamento(produto.preco(), pessoa.getOrcamento()))
                 .filter(produto -> !rejeitado(pessoa, List.of(produto.titulo())))
-                .map(produto -> ideia.naLoja(produto.link(), produto.imagemUrl()))
+                .findFirst()
+                .map(ideia::comProduto)
                 .orElseGet(() -> semProduto(ideia));
     }
 
@@ -119,7 +121,7 @@ public class SugestaoService {
     }
 
     private IdeiaPresente semProduto(IdeiaPresente ideia) {
-        return ideia.naLoja(loja.linkBusca(ideia.nome()), null);
+        return ideia.comLinkBusca(loja.linkBusca(ideia.nome()));
     }
 
     private SugestaoPresente avaliar(Pessoa pessoa, Presente presente) {
@@ -144,9 +146,7 @@ public class SugestaoService {
     }
 
     private boolean dentroDoOrcamento(BigDecimal preco, FaixaOrcamento orcamento) {
-        return preco != null
-                && preco.compareTo(orcamento.minimo()) >= 0
-                && preco.compareTo(orcamento.maximo()) <= 0;
+        return preco != null && preco.compareTo(orcamento.maximo()) <= 0;
     }
 
     private boolean rejeitado(Pessoa pessoa, List<String> textos) {

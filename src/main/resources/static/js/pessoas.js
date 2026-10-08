@@ -32,10 +32,7 @@ function lerFormulario() {
         interesses: textoParaLista(campos.interesses.value),
         naoGosta: textoParaLista(campos.naoGosta.value),
         ocasiao: textoOuNulo(campos.ocasiao.value),
-        orcamento: {
-            minimo: numeroOuNulo(campos.orcamentoMinimo.value),
-            maximo: numeroOuNulo(campos.orcamentoMaximo.value),
-        },
+        orcamento: { maximo: numeroOuNulo(campos.orcamentoMaximo.value) },
     };
 }
 
@@ -48,7 +45,6 @@ function preencherFormulario(pessoa) {
     campos.interesses.value = listaParaTexto(pessoa.interesses);
     campos.naoGosta.value = listaParaTexto(pessoa.naoGosta);
     campos.ocasiao.value = pessoa.ocasiao;
-    campos.orcamentoMinimo.value = pessoa.orcamento.minimo;
     campos.orcamentoMaximo.value = pessoa.orcamento.maximo;
 }
 
@@ -116,9 +112,7 @@ function renderizar() {
                         ${escaparHtml(descricao("vinculos", pessoa.vinculo))} · ${pessoa.idade} anos
                     </p>
                 </div>
-                <span class="item__preco">
-                    ${formatarMoeda(pessoa.orcamento.minimo)} a ${formatarMoeda(pessoa.orcamento.maximo)}
-                </span>
+                <span class="item__preco">até ${formatarMoeda(pessoa.orcamento.maximo)}</span>
             </div>
             <dl class="item__detalhes">
                 <dt>Ocasião</dt><dd>${escaparHtml(descricao("ocasioes", pessoa.ocasiao))}</dd>
