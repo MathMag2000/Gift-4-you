@@ -20,6 +20,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Monta os services ligados entre si, com relógio fixo e uma IA falsa que devolve {@link #ideiasDaIa}.
@@ -28,9 +29,15 @@ class Cenario {
 
     final Clock relogio = Clock.fixed(Instant.parse("2026-10-08T12:00:00Z"), ZoneOffset.UTC);
     final List<IdeiaPresente> ideiasDaIa = new ArrayList<>();
+    /** Links que o extrator falso recebeu. Links com "sem-imagem" simulam uma loja que bloqueia a leitura. */
+    final List<String> linksConsultados = new ArrayList<>();
 
     final PessoaService pessoas = new PessoaService(new PessoaRepositoryEmMemoria(), new PessoaValidador());
-    final PresenteService presentes = new PresenteService(new PresenteRepositoryEmMemoria(), new PresenteValidador());
+    final PresenteService presentes = new PresenteService(new PresenteRepositoryEmMemoria(), new PresenteValidador(),
+            link -> {
+                linksConsultados.add(link);
+                return link.contains("sem-imagem") ? Optional.empty() : Optional.of(link + "/foto.jpg");
+            });
     final HistoricoService historico = new HistoricoService(new HistoricoRepositoryEmMemoria(), relogio);
     final FavoritoService favoritos = new FavoritoService(new FavoritoRepositoryEmMemoria(), new FavoritoValidador(),
             pessoas, presentes, relogio);
@@ -49,7 +56,11 @@ class Cenario {
 
     Presente cadastrarPresente(String nome, Categoria categoria, String preco, List<String> caracteristicas) {
         return presentes.cadastrar(new DadosPresente(nome, categoria, "", new BigDecimal(preco), caracteristicas,
-                List.of(Ocasiao.ANIVERSARIO)));
+                List.of(Ocasiao.ANIVERSARIO), linkDe(nome)));
+    }
+
+    static String linkDe(String nome) {
+        return "https://loja.exemplo.com/" + nome.toLowerCase().replace(' ', '-');
     }
 
     static IdeiaPresente ideia(String nome, String preco) {

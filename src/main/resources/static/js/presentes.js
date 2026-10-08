@@ -2,7 +2,7 @@ import { api } from "./api.js";
 import { ControleFormulario } from "./formulario.js";
 import { descricao, preencherMarcadores } from "./opcoes.js";
 import {
-    escaparHtml, etiquetas, formatarMoeda, listaParaTexto, mostrarAviso, mostrarErro,
+    escaparHtml, etiquetas, formatarMoeda, imagemProduto, linkCompra, listaParaTexto, mostrarAviso, mostrarErro,
     numeroOuNulo, textoOuNulo, textoParaLista,
 } from "./util.js";
 
@@ -36,6 +36,7 @@ function lerFormulario() {
         preco: numeroOuNulo(campos.preco.value),
         caracteristicas: textoParaLista(campos.caracteristicas.value),
         ocasioes: ocasioesMarcadas(),
+        linkCompra: campos.linkCompra.value,
     };
 }
 
@@ -46,6 +47,7 @@ function preencherFormulario(presente) {
     campos.descricao.value = presente.descricao;
     campos.preco.value = presente.preco;
     campos.caracteristicas.value = listaParaTexto(presente.caracteristicas);
+    campos.linkCompra.value = presente.linkCompra;
     formulario.querySelectorAll('input[name="ocasioes"]').forEach((marcador) => {
         marcador.checked = presente.ocasioes.includes(marcador.value);
     });
@@ -56,19 +58,20 @@ async function salvar(evento) {
     await controle.executarSalvando(async () => {
         try {
             const dados = lerFormulario();
-            if (controle.emEdicao()) {
-                await api.alterarPresente(controle.idEmEdicao, dados);
-                mostrarAviso("Presente alterado.");
-            } else {
-                await api.cadastrarPresente(dados);
-                mostrarAviso("Presente cadastrado.");
-            }
+            const editando = controle.emEdicao();
+            const presente = editando
+                ? await api.alterarPresente(controle.idEmEdicao, dados)
+                : await api.cadastrarPresente(dados);
+            const acao = editando ? "Presente alterado" : "Presente cadastrado";
+            mostrarAviso(presente.imagemUrl
+                ? `${acao}.`
+                : `${acao}, mas a loja não permitiu ler a foto do produto.`);
             controle.voltarParaCadastro();
             await carregar();
         } catch (erro) {
             mostrarErro(erro);
         }
-    });
+    }, "Salvando e buscando a foto...");
 }
 
 async function tratarAcaoDaLista(evento) {
@@ -107,25 +110,29 @@ function renderizar() {
         return;
     }
     lista.innerHTML = presentes.map((presente) => `
-        <article class="cartao item">
-            <div class="item__topo">
-                <div>
-                    <h3 class="item__titulo">${escaparHtml(presente.nome)}</h3>
-                    <p class="item__subtitulo">${escaparHtml(descricao("categorias", presente.categoria))}</p>
+        <article class="cartao item item--com-imagem">
+            ${imagemProduto(presente.imagemUrl, presente.nome, "imagem-produto--miniatura")}
+            <div class="item__conteudo">
+                <div class="item__topo">
+                    <div>
+                        <h3 class="item__titulo">${escaparHtml(presente.nome)}</h3>
+                        <p class="item__subtitulo">${escaparHtml(descricao("categorias", presente.categoria))}</p>
+                    </div>
+                    <span class="item__preco">${formatarMoeda(presente.preco)}</span>
                 </div>
-                <span class="item__preco">${formatarMoeda(presente.preco)}</span>
-            </div>
-            ${presente.descricao ? `<p class="item__descricao">${escaparHtml(presente.descricao)}</p>` : ""}
-            <dl class="item__detalhes">
-                <dt>Características</dt><dd>${etiquetas(presente.caracteristicas)}</dd>
-                <dt>Ocasiões</dt>
-                <dd>${etiquetas(presente.ocasioes.map((ocasiao) => descricao("ocasioes", ocasiao)))}</dd>
-            </dl>
-            <div class="acoes">
-                <button type="button" class="botao botao--secundario botao--pequeno"
-                        data-acao="editar" data-id="${presente.id}">Editar</button>
-                <button type="button" class="botao botao--perigo botao--pequeno"
-                        data-acao="remover" data-id="${presente.id}">Remover</button>
+                ${presente.descricao ? `<p class="item__descricao">${escaparHtml(presente.descricao)}</p>` : ""}
+                <dl class="item__detalhes">
+                    <dt>Características</dt><dd>${etiquetas(presente.caracteristicas)}</dd>
+                    <dt>Ocasiões</dt>
+                    <dd>${etiquetas(presente.ocasioes.map((ocasiao) => descricao("ocasioes", ocasiao)))}</dd>
+                </dl>
+                <div class="acoes">
+                    ${linkCompra(presente.linkCompra, "Ver na loja ↗")}
+                    <button type="button" class="botao botao--secundario botao--pequeno"
+                            data-acao="editar" data-id="${presente.id}">Editar</button>
+                    <button type="button" class="botao botao--perigo botao--pequeno"
+                            data-acao="remover" data-id="${presente.id}">Remover</button>
+                </div>
             </div>
         </article>`).join("");
 }

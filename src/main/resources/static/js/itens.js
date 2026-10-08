@@ -1,6 +1,6 @@
 // Formato comum dos itens sugeridos (catálogo ou IA), usado em sugestões, histórico e favoritos.
 import { descricao } from "./opcoes.js";
-import { escaparHtml, etiquetas, formatarMoeda } from "./util.js";
+import { escaparHtml, etiquetas, formatarMoeda, imagemProduto, linkCompra } from "./util.js";
 
 export const CATALOGO = "CATALOGO";
 export const IA = "IA";
@@ -12,6 +12,8 @@ export function itemDeSugestao({ presente, motivos }) {
         categoria: descricao("categorias", presente.categoria),
         preco: presente.preco,
         motivos,
+        linkCompra: presente.linkCompra,
+        imagemUrl: presente.imagemUrl,
     };
 }
 
@@ -22,6 +24,8 @@ export function itemDeIdeia(ideia) {
         categoria: ideia.categoria,
         preco: ideia.precoEstimado,
         motivos: ideia.motivo ? [ideia.motivo] : [],
+        linkCompra: null,
+        imagemUrl: null,
     };
 }
 
@@ -43,8 +47,10 @@ export function renderizarItem(item, origem, { posicao, rodape = "", acoes = "" 
     const motivos = ehIa
         ? item.motivos.map((motivo) => `<p class="item__descricao">${escaparHtml(motivo)}</p>`).join("")
         : `<p class="item__descricao">${etiquetas(item.motivos, "etiqueta--motivo")}</p>`;
+    const botoes = linkCompra(item.linkCompra) + acoes;
     return `
         <article class="cartao item sugestao ${ehIa ? "sugestao--ia" : ""}">
+            ${ehIa ? "" : imagemProduto(item.imagemUrl, item.nome, "imagem-produto--destaque")}
             <div class="item__topo">
                 ${posicao ? `<span class="sugestao__posicao">${posicao}</span>` : ""}
                 <div class="item__info">
@@ -58,6 +64,6 @@ export function renderizarItem(item, origem, { posicao, rodape = "", acoes = "" 
             </div>
             ${item.motivos.length ? motivos : ""}
             ${rodape}
-            ${acoes ? `<div class="acoes">${acoes}</div>` : ""}
+            ${botoes ? `<div class="acoes">${botoes}</div>` : ""}
         </article>`;
 }

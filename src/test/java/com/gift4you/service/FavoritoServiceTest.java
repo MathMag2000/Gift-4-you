@@ -35,24 +35,28 @@ class FavoritoServiceTest {
     }
 
     private Favorito favoritarDoCatalogo(int pessoaId, int presenteId) {
-        ItemSugerido item = new ItemSugerido(presenteId, null, null, null, List.of("combina com os gostos: café"));
+        ItemSugerido item = new ItemSugerido(presenteId, null, null, null, List.of("combina com os gostos: café"),
+                null, null);
         return cenario.favoritos.favoritar(new DadosFavorito(pessoaId, OrigemSugestao.CATALOGO, item));
     }
 
     private Favorito favoritarIdeia(int pessoaId, String nome, String preco) {
         ItemSugerido item = new ItemSugerido(null, nome, " Utensílios ", preco == null ? null : new BigDecimal(preco),
-                List.of("Bom para quem gosta de café", " "));
+                List.of("Bom para quem gosta de café", " "), "javascript:alert(1)", "https://falsa/img.jpg");
         return cenario.favoritos.favoritar(new DadosFavorito(pessoaId, OrigemSugestao.IA, item));
     }
 
     @Test
     void favoritarDoCatalogoUsaOsDadosDoCatalogoENaoOsEnviados() {
-        ItemSugerido enviado = new ItemSugerido(kitCafe.getId(), "Nome falso", "Outra", new BigDecimal("1"), List.of());
+        ItemSugerido enviado = new ItemSugerido(kitCafe.getId(), "Nome falso", "Outra", new BigDecimal("1"), List.of(),
+                "https://golpe.exemplo.com", "https://golpe.exemplo.com/img.jpg");
 
         Favorito favorito = cenario.favoritos.favoritar(new DadosFavorito(ana.getId(), OrigemSugestao.CATALOGO, enviado));
 
         assertThat(favorito.getId()).isNotNull();
         assertThat(favorito.getItem().nome()).isEqualTo("Kit de café");
+        assertThat(favorito.getItem().linkCompra()).isEqualTo(Cenario.linkDe("Kit de café"));
+        assertThat(favorito.getItem().imagemUrl()).isEqualTo(Cenario.linkDe("Kit de café") + "/foto.jpg");
         assertThat(favorito.getItem().categoria()).isEqualTo("Gastronomia");
         assertThat(favorito.getItem().preco()).isEqualByComparingTo("90");
         assertThat(favorito.getFavoritadoEm()).isEqualTo(LocalDateTime.of(2026, 10, 8, 12, 0));
@@ -83,6 +87,8 @@ class FavoritoServiceTest {
         assertThat(favorito.getItem().categoria()).isEqualTo("Utensílios");
         assertThat(favorito.getItem().presenteId()).isNull();
         assertThat(favorito.getItem().motivos()).containsExactly("Bom para quem gosta de café");
+        assertThat(favorito.getItem().linkCompra()).isNull();
+        assertThat(favorito.getItem().imagemUrl()).isNull();
     }
 
     @Test

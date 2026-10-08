@@ -33,12 +33,18 @@ export class ControleFormulario {
         return this.idEmEdicao !== null;
     }
 
-    async executarSalvando(acao) {
+    /** Desabilita o botão enquanto salva, mostrando um texto de espera. */
+    async executarSalvando(acao, textoEspera = "Salvando...") {
+        const textoOriginal = this.botaoSalvar.textContent;
         this.botaoSalvar.disabled = true;
+        this.botaoSalvar.textContent = textoEspera;
         try {
             await acao();
         } finally {
             this.botaoSalvar.disabled = false;
+            if (this.botaoSalvar.textContent === textoEspera) {
+                this.botaoSalvar.textContent = textoOriginal;
+            }
         }
     }
 }

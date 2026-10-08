@@ -74,8 +74,6 @@ public class FavoritoService implements OuvinteRemocaoPessoa {
     /** Usa os dados atuais do catálogo, e não os enviados, mantendo só os motivos da sugestão. */
     private ItemSugerido itemDoCatalogo(ItemSugerido enviado) {
         Presente presente = presenteService.buscarPorId(validador.exigirPresenteId(enviado));
-        List<String> motivos = enviado.motivos() == null ? List.of() : List.copyOf(enviado.motivos());
-        return new ItemSugerido(presente.getId(), presente.getNome(), presente.getCategoria().toString(),
-                presente.getPreco(), motivos);
+        return ItemSugerido.de(presente, enviado.motivos() == null ? List.of() : enviado.motivos());
     }
 }

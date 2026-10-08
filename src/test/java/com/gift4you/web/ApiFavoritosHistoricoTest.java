@@ -1,13 +1,18 @@
 package com.gift4you.web;
 
+import com.gift4you.service.ExtratorImagemProduto;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.Optional;
+
 import static org.hamcrest.Matchers.hasSize;
+import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -24,6 +29,10 @@ class ApiFavoritosHistoricoTest {
     @Autowired
     private MockMvc mvc;
 
+    /** Evita acessar a internet: a página da loja é simulada. */
+    @MockitoBean
+    private ExtratorImagemProduto extratorImagem;
+
     private void enviar(String caminho, String json) throws Exception {
         mvc.perform(post(caminho).contentType(MediaType.APPLICATION_JSON).content(json))
                 .andExpect(status().isCreated());
@@ -31,16 +40,31 @@ class ApiFavoritosHistoricoTest {
 
     @Test
     void fluxoDeSugestaoHistoricoEFavorito() throws Exception {
+        given(extratorImagem.extrair("https://loja.exemplo.com/kit-cafe"))
+                .willReturn(Optional.of("https://img.exemplo.com/kit-cafe.jpg"));
+
         enviar("/api/pessoas", """
                 {"nome":"Ana","idade":30,"vinculo":"AMIGO","gostos":["café"],"interesses":[],"naoGosta":[],
                  "ocasiao":"ANIVERSARIO","orcamento":{"minimo":50,"maximo":200}}""");
         enviar("/api/presentes", """
                 {"nome":"Kit de café","categoria":"GASTRONOMIA","descricao":"","preco":90,
-                 "caracteristicas":["café"],"ocasioes":["ANIVERSARIO"]}""");
+                 "caracteristicas":["café"],"ocasioes":["ANIVERSARIO"],
+                 "linkCompra":"https://loja.exemplo.com/kit-cafe"}""");
+
+        mvc.perform(post("/api/presentes").contentType(MediaType.APPLICATION_JSON).content("""
+                        {"nome":"X","categoria":"JOGOS","preco":10,"ocasioes":["NATAL"],"linkCompra":"javascript:alert(1)"}"""))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensagem").value(
+                        "Informe um link para compra válido, começando com http:// ou https://."));
+
+        mvc.perform(get("/api/presentes/1"))
+                .andExpect(jsonPath("$.linkCompra").value("https://loja.exemplo.com/kit-cafe"))
+                .andExpect(jsonPath("$.imagemUrl").value("https://img.exemplo.com/kit-cafe.jpg"));
 
         mvc.perform(get("/api/pessoas/1/sugestoes"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)));
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].presente.imagemUrl").value("https://img.exemplo.com/kit-cafe.jpg"));
 
         mvc.perform(get("/api/historico").param("pessoaId", "1"))
                 .andExpect(status().isOk())
@@ -48,6 +72,8 @@ class ApiFavoritosHistoricoTest {
                 .andExpect(jsonPath("$[0].ocasiao").value("ANIVERSARIO"))
                 .andExpect(jsonPath("$[0].itens[0].nome").value("Kit de café"))
                 .andExpect(jsonPath("$[0].itens[0].categoria").value("Gastronomia"))
+                .andExpect(jsonPath("$[0].itens[0].linkCompra").value("https://loja.exemplo.com/kit-cafe"))
+                .andExpect(jsonPath("$[0].itens[0].imagemUrl").value("https://img.exemplo.com/kit-cafe.jpg"))
                 .andExpect(jsonPath("$[0].realizadoEm").isString());
 
         mvc.perform(post("/api/favoritos").contentType(MediaType.APPLICATION_JSON).content("""
