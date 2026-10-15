@@ -19,13 +19,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 /**
- * Gera sugestões priorizando presentes dentro do orçamento, compatíveis com gostos, interesses
- * e ocasião, e descartando os relacionados ao que a pessoa não gosta.
+ * Gera sugestões priorizando presentes dentro do orçamento, compatíveis com os gostos e interesses
+ * e com a ocasião, e descartando os relacionados ao que a pessoa não gosta.
  */
 public class SugestaoService {
 
     private static final int PONTOS_POR_GOSTO = 2;
-    private static final int PONTOS_POR_INTERESSE = 2;
     private static final int PONTOS_OCASIAO = 3;
     private static final int LIMITE_SUGESTOES = 5;
     private static final int QUANTIDADE_IDEIAS_IA = 6;
@@ -127,16 +126,12 @@ public class SugestaoService {
     private SugestaoPresente avaliar(Pessoa pessoa, Presente presente) {
         List<String> textos = textosDoPresente(presente);
         List<String> gostos = termosEncontrados(pessoa.getGostos(), textos);
-        List<String> interesses = termosEncontrados(pessoa.getInteresses(), textos);
         boolean ocasiaoCompativel = presente.getOcasioes().contains(pessoa.getOcasiao());
 
-        int pontuacao = gostos.size() * PONTOS_POR_GOSTO + interesses.size() * PONTOS_POR_INTERESSE;
+        int pontuacao = gostos.size() * PONTOS_POR_GOSTO;
         List<String> motivos = new ArrayList<>();
         if (!gostos.isEmpty()) {
             motivos.add("combina com os gostos: " + String.join(", ", gostos));
-        }
-        if (!interesses.isEmpty()) {
-            motivos.add("combina com os interesses: " + String.join(", ", interesses));
         }
         if (ocasiaoCompativel) {
             pontuacao += PONTOS_OCASIAO;

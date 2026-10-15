@@ -8,8 +8,8 @@ public class Pessoa implements Identificavel {
     private String nome;
     private int idade;
     private Vinculo vinculo;
+    /** Gostos e interesses, num só campo. */
     private List<String> gostos;
-    private List<String> interesses;
     private List<String> naoGosta;
     private Ocasiao ocasiao;
     private FaixaOrcamento orcamento;
@@ -23,7 +23,6 @@ public class Pessoa implements Identificavel {
         this.idade = dados.idade();
         this.vinculo = dados.vinculo();
         this.gostos = List.copyOf(dados.gostos());
-        this.interesses = List.copyOf(dados.interesses());
         this.naoGosta = List.copyOf(dados.naoGosta());
         this.ocasiao = dados.ocasiao();
         this.orcamento = dados.orcamento();
@@ -53,10 +52,6 @@ public class Pessoa implements Identificavel {
 
     public List<String> getGostos() {
         return gostos;
-    }
-
-    public List<String> getInteresses() {
-        return interesses;
     }
 
     public List<String> getNaoGosta() {

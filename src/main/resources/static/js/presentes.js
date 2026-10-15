@@ -1,6 +1,6 @@
 import { api } from "./api.js";
 import { ControleFormulario } from "./formulario.js";
-import { descricao, preencherMarcadores } from "./opcoes.js";
+import { descricao, marcarValores, preencherMarcadores, valoresMarcados } from "./opcoes.js";
 import {
     comLink, escaparHtml, etiquetas, formatarMoeda, imagemProduto, linkCompra, listaParaTexto, mostrarAviso, mostrarErro,
     numeroOuNulo, textoOuNulo, textoParaLista,
@@ -23,10 +23,6 @@ async function carregar() {
     renderizar();
 }
 
-function ocasioesMarcadas() {
-    return [...formulario.querySelectorAll('input[name="ocasioes"]:checked')].map((marcador) => marcador.value);
-}
-
 function lerFormulario() {
     const campos = formulario.elements;
     return {
@@ -35,7 +31,7 @@ function lerFormulario() {
         descricao: campos.descricao.value,
         preco: numeroOuNulo(campos.preco.value),
         caracteristicas: textoParaLista(campos.caracteristicas.value),
-        ocasioes: ocasioesMarcadas(),
+        ocasioes: valoresMarcados(formulario, "ocasioes"),
         linkCompra: campos.linkCompra.value,
     };
 }
@@ -48,9 +44,7 @@ function preencherFormulario(presente) {
     campos.preco.value = presente.preco;
     campos.caracteristicas.value = listaParaTexto(presente.caracteristicas);
     campos.linkCompra.value = presente.linkCompra;
-    formulario.querySelectorAll('input[name="ocasioes"]').forEach((marcador) => {
-        marcador.checked = presente.ocasioes.includes(marcador.value);
-    });
+    marcarValores(formulario, "ocasioes", presente.ocasioes);
 }
 
 async function salvar(evento) {

@@ -64,7 +64,7 @@ class Cenario {
     }
 
     Pessoa cadastrarPessoa(String nome, List<String> gostos, List<String> naoGosta) {
-        return pessoas.cadastrar(new DadosPessoa(nome, 30, Vinculo.AMIGO, gostos, List.of(), naoGosta,
+        return pessoas.cadastrar(new DadosPessoa(nome, 30, Vinculo.AMIGO, gostos, naoGosta,
                 Ocasiao.ANIVERSARIO, new FaixaOrcamento(new BigDecimal("200"))));
     }
 

@@ -29,6 +29,7 @@
 * [x] Adicionar idade
 * [x] Adicionar vínculo
 * [x] Adicionar gostos e interesses
+* [x] Unir gostos e interesses num só campo, com tags predefinidas e opção de digitar outros
 * [x] Adicionar itens que a pessoa não gosta
 * [x] Adicionar ocasião
 * [x] Adicionar faixa de orçamento

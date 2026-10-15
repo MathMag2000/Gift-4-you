@@ -44,7 +44,7 @@ class ApiFavoritosHistoricoTest {
                 .willReturn(Optional.of("https://img.exemplo.com/kit-cafe.jpg"));
 
         enviar("/api/pessoas", """
-                {"nome":"Ana","idade":30,"vinculo":"AMIGO","gostos":["café"],"interesses":[],"naoGosta":[],
+                {"nome":"Ana","idade":30,"vinculo":"AMIGO","gostos":["café"],"naoGosta":[],
                  "ocasiao":"ANIVERSARIO","orcamento":{"maximo":200}}""");
         enviar("/api/presentes", """
                 {"nome":"Kit de café","categoria":"GASTRONOMIA","descricao":"","preco":90,

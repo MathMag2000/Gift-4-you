@@ -71,7 +71,7 @@ class HistoricoServiceTest {
     @Test
     void registraMesmoQuandoNenhumaSugestaoEEncontrada() {
         Pessoa semAfinidade = cenario.pessoas.cadastrar(new DadosPessoa("Caio", 20, Vinculo.IRMAO, List.of(),
-                List.of(), List.of(), Ocasiao.FORMATURA,
+                List.of(), Ocasiao.FORMATURA,
                 new FaixaOrcamento(new BigDecimal("2000"))));
 
         cenario.sugestoes.gerarSugestoes(semAfinidade.getId());
@@ -84,7 +84,7 @@ class HistoricoServiceTest {
     void guardaOPerfilDoMomentoMesmoQueAPessoaMudeDepois() {
         cenario.sugestoes.gerarSugestoes(ana.getId());
 
-        cenario.pessoas.alterar(ana.getId(), new DadosPessoa("Ana", 30, Vinculo.AMIGO, List.of("café"), List.of(),
+        cenario.pessoas.alterar(ana.getId(), new DadosPessoa("Ana", 30, Vinculo.AMIGO, List.of("café"),
                 List.of(), Ocasiao.NATAL, new FaixaOrcamento(new BigDecimal("20"))));
 
         RegistroHistorico registro = cenario.historico.listar(ana.getId()).getFirst();
