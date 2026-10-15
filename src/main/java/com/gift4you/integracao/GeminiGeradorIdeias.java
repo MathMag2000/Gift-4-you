@@ -81,15 +81,14 @@ public class GeminiGeradorIdeias implements GeradorIdeias {
                 Perfil:
                 - Idade: %d anos
                 - Vínculo com quem vai presentear: %s
-                - Gostos: %s
-                - Interesses: %s
+                - Gostos e interesses: %s
                 - Ocasião: %s
                 """.formatted(quantidade,
                 pessoa.getOrcamento().maximo().toPlainString(),
                 pessoa.getNaoGosta().isEmpty() ? "Não há itens a evitar."
                         : "Não sugira nada relacionado a: " + String.join(", ", pessoa.getNaoGosta()) + ".",
                 pessoa.getIdade(), pessoa.getVinculo(),
-                listaOuNenhum(pessoa.getGostos()), listaOuNenhum(pessoa.getInteresses()), pessoa.getOcasiao());
+                listaOuNenhum(pessoa.getGostos()), pessoa.getOcasiao());
     }
 
     private String montarCorpo(String prompt) {

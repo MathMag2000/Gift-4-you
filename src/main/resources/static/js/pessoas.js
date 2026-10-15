@@ -1,6 +1,6 @@
 import { api } from "./api.js";
 import { ControleFormulario } from "./formulario.js";
-import { descricao } from "./opcoes.js";
+import { descricao, marcarValores, preencherMarcadores, valoresForaDasOpcoes, valoresMarcados } from "./opcoes.js";
 import {
     escaparHtml, etiquetas, formatarMoeda, listaParaTexto, mostrarAviso, mostrarErro,
     numeroOuNulo, textoOuNulo, textoParaLista,
@@ -12,6 +12,7 @@ const controle = new ControleFormulario(formulario, document.getElementById("tit
 let pessoas = [];
 
 export function iniciarPessoas() {
+    preencherMarcadores(document.getElementById("gostos-pessoa"), "gostos", "gostos");
     formulario.addEventListener("submit", salvar);
     lista.addEventListener("click", tratarAcaoDaLista);
     return carregar();
@@ -28,8 +29,7 @@ function lerFormulario() {
         nome: campos.nome.value,
         idade: numeroOuNulo(campos.idade.value),
         vinculo: textoOuNulo(campos.vinculo.value),
-        gostos: textoParaLista(campos.gostos.value),
-        interesses: textoParaLista(campos.interesses.value),
+        gostos: [...valoresMarcados(formulario, "gostos"), ...textoParaLista(campos.outrosGostos.value)],
         naoGosta: textoParaLista(campos.naoGosta.value),
         ocasiao: textoOuNulo(campos.ocasiao.value),
         orcamento: { maximo: numeroOuNulo(campos.orcamentoMaximo.value) },
@@ -41,8 +41,8 @@ function preencherFormulario(pessoa) {
     campos.nome.value = pessoa.nome;
     campos.idade.value = pessoa.idade;
     campos.vinculo.value = pessoa.vinculo;
-    campos.gostos.value = listaParaTexto(pessoa.gostos);
-    campos.interesses.value = listaParaTexto(pessoa.interesses);
+    marcarValores(formulario, "gostos", pessoa.gostos);
+    campos.outrosGostos.value = listaParaTexto(valoresForaDasOpcoes("gostos", pessoa.gostos));
     campos.naoGosta.value = listaParaTexto(pessoa.naoGosta);
     campos.ocasiao.value = pessoa.ocasiao;
     campos.orcamentoMaximo.value = pessoa.orcamento.maximo;
@@ -116,8 +116,7 @@ function renderizar() {
             </div>
             <dl class="item__detalhes">
                 <dt>Ocasião</dt><dd>${escaparHtml(descricao("ocasioes", pessoa.ocasiao))}</dd>
-                <dt>Gostos</dt><dd>${etiquetas(pessoa.gostos)}</dd>
-                <dt>Interesses</dt><dd>${etiquetas(pessoa.interesses)}</dd>
+                <dt>Gostos e interesses</dt><dd>${etiquetas(pessoa.gostos)}</dd>
                 <dt>Não gosta</dt><dd>${etiquetas(pessoa.naoGosta, "etiqueta--negativa")}</dd>
             </dl>
             <div class="acoes">

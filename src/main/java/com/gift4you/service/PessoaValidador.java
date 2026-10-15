@@ -18,18 +18,16 @@ public class PessoaValidador extends ValidadorBase {
     public DadosPessoa validar(DadosPessoa dados) {
         String nome = exigirTexto(dados.nome(), "O nome é obrigatório.");
         List<String> gostos = normalizarLista(dados.gostos());
-        List<String> interesses = normalizarLista(dados.interesses());
         List<String> naoGosta = normalizarLista(dados.naoGosta());
 
         validarIdade(dados.idade());
         exigir(dados.vinculo(), "O vínculo é obrigatório.");
         exigir(dados.ocasiao(), "A ocasião é obrigatória.");
         validarOrcamento(dados.orcamento());
-        validarSemConflito(gostos, naoGosta, "gostos");
-        validarSemConflito(interesses, naoGosta, "interesses");
+        validarSemConflito(gostos, naoGosta);
 
         return new DadosPessoa(nome, dados.idade(), dados.vinculo(),
-                gostos, interesses, naoGosta, dados.ocasiao(), dados.orcamento());
+                gostos, naoGosta, dados.ocasiao(), dados.orcamento());
     }
 
     private void validarIdade(Integer idade) {
@@ -48,10 +46,10 @@ public class PessoaValidador extends ValidadorBase {
         }
     }
 
-    private void validarSemConflito(List<String> preferidos, List<String> naoGosta, String nomeLista) {
-        List<String> conflitos = preferidos.stream().filter(naoGosta::contains).toList();
+    private void validarSemConflito(List<String> gostos, List<String> naoGosta) {
+        List<String> conflitos = gostos.stream().filter(naoGosta::contains).toList();
         if (!conflitos.isEmpty()) {
-            throw new ValidacaoException("Itens presentes em " + nomeLista
+            throw new ValidacaoException("Itens presentes em gostos e interesses"
                     + " e em \"não gosta\" ao mesmo tempo: " + String.join(", ", conflitos));
         }
     }

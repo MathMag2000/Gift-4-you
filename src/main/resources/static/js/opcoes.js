@@ -22,6 +22,21 @@ export function preencherSelects() {
     });
 }
 
+export function valoresMarcados(formulario, nomeCampo) {
+    return [...formulario.querySelectorAll(`input[name="${nomeCampo}"]:checked`)].map((marcador) => marcador.value);
+}
+
+export function marcarValores(formulario, nomeCampo, valores) {
+    formulario.querySelectorAll(`input[name="${nomeCampo}"]`).forEach((marcador) => {
+        marcador.checked = valores.includes(marcador.value);
+    });
+}
+
+/** Valores que não estão entre as opções do tipo (ex.: gostos digitados pelo usuário). */
+export function valoresForaDasOpcoes(tipo, valores) {
+    return valores.filter((valor) => !opcoes[tipo].some((opcao) => opcao.valor === valor));
+}
+
 export function preencherMarcadores(container, tipo, nomeCampo) {
     container.innerHTML = opcoes[tipo]
         .map((opcao) => `

@@ -134,7 +134,7 @@ label, legend {
     font-size: .9rem;
 }
 
-label small {
+label small, legend small {
     font-weight: 400;
     color: var(--cor-texto-suave);
 }
@@ -168,6 +168,11 @@ fieldset {
 
 legend {
     margin-bottom: .4rem;
+}
+
+/* Campo de texto logo abaixo das tags, como nos gostos e interesses. */
+.opcoes-marcar + label {
+    margin-top: .6rem;
 }
 
 .linha {

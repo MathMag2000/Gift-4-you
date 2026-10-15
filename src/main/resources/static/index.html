@@ -39,12 +39,13 @@
                         <select name="vinculo" data-opcoes="vinculos"></select>
                     </label>
                 </div>
-                <label>Gostos <small>separados por vírgula</small>
-                    <input name="gostos" type="text" placeholder="ex.: música, café, livros">
-                </label>
-                <label>Interesses <small>separados por vírgula</small>
-                    <input name="interesses" type="text" placeholder="ex.: viagem, fotografia">
-                </label>
+                <fieldset>
+                    <legend>Gostos e interesses <small>marque as tags que combinam com a pessoa</small></legend>
+                    <div id="gostos-pessoa" class="opcoes-marcar"></div>
+                    <label>Outros <small>opcional, separados por vírgula</small>
+                        <input name="outrosGostos" type="text" placeholder="ex.: anime, vinho, jardinagem">
+                    </label>
+                </fieldset>
                 <label>Não gosta <small>itens ou categorias, separados por vírgula</small>
                     <input name="naoGosta" type="text" placeholder="ex.: perfume, eletrônicos">
                 </label>
