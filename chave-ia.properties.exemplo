@@ -1,0 +1,4 @@
+# Copie este arquivo para "chave-ia.properties" (na mesma pasta) e troque o valor abaixo pela sua chave.
+# O arquivo chave-ia.properties é ignorado pelo Git: a chave nunca vai para o GitHub.
+# Crie uma chave gratuita em https://aistudio.google.com/apikey
+gemini.chave-api=COLE_SUA_CHAVE_AQUI
