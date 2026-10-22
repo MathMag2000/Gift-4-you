@@ -33,3 +33,5 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+### Chave da IA (nunca enviar ao GitHub) ###
+chave-ia.properties

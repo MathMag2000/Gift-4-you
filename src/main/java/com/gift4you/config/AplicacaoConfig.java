@@ -55,7 +55,7 @@ public class AplicacaoConfig {
                                        @Value("${gemini.modelo:}") String modelo) {
         if (chaveApi.isBlank()) {
             return new GeradorIdeiasIndisponivel(
-                    "IA não configurada. Defina a variável de ambiente GEMINI_API_KEY e reinicie o servidor.");
+                    "IA não configurada. Crie o arquivo chave-ia.properties (veja o README) e reinicie o servidor.");
         }
         return new GeminiGeradorIdeias(chaveApi, modelo);
     }
