@@ -116,7 +116,7 @@ public class GeminiGeradorIdeias implements GeradorIdeias {
 
     private String mensagemDeErro(int status) {
         return switch (status) {
-            case 400, 401, 403 -> "O Gemini recusou a chave de API. Confira a variável GEMINI_API_KEY.";
+            case 400, 401, 403 -> "O Gemini recusou a chave de API. Confira o arquivo chave-ia.properties ou a variável GEMINI_API_KEY.";
             case 404 -> "Modelo do Gemini não encontrado. Confira a variável GEMINI_MODEL.";
             case 429 -> "Limite de uso do Gemini atingido. Tente novamente mais tarde.";
             case 500, 503 -> "O Gemini está sobrecarregado no momento. Tente novamente em instantes.";
