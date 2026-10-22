@@ -79,7 +79,7 @@ function sugerirDoCatalogo() {
 }
 
 function sugerirComIa() {
-    return executar("Consultando o Gemini, isso pode levar alguns segundos...", async (pessoa) => {
+    return executar("Gerando ideias com IA, isso pode levar alguns segundos...", async (pessoa) => {
         const { ideias, descartadas } = await api.ideiasComIa(pessoa.id);
         const vazio = ideias.length === 0
             ? `<p class="vazio">A IA não retornou ideias dentro do orçamento e das restrições. Tente novamente.</p>`

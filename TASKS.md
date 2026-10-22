@@ -100,10 +100,10 @@
 
 ## Documentação
 
-* [ ] Atualizar README.md
+* [x] Atualizar README.md
 * [ ] Documentar funcionamento do sistema
-* [ ] Documentar como executar o projeto
-* [ ] Documentar estrutura do projeto
+* [x] Documentar como executar o projeto
+* [x] Documentar estrutura do projeto
 
 ## GitHub
 
