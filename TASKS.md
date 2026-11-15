@@ -113,3 +113,12 @@
 * [x] Adicionar código-fonte
 * [x] Criar primeiro commit
 * [x] Fazer push para o GitHub
+
+## Conta e autenticação
+
+* [ ] Criar classe Usuario
+* [ ] Implementar cadastro de usuário
+* [ ] Implementar login de usuário
+* [ ] Validar e-mail e senha
+* [ ] Implementar logout
+* [ ] Associar pessoas cadastradas à conta do usuário
