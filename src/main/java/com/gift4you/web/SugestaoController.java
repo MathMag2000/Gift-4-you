@@ -22,13 +22,13 @@ public class SugestaoController {
     }
 
     @GetMapping("/sugestoes")
-    public List<SugestaoPresente> sugestoesDoCatalogo(@PathVariable int pessoaId) {
-        return sugestaoService.gerarSugestoes(pessoaId);
+    public List<SugestaoPresente> sugestoesDoCatalogo(UsuarioLogado usuario, @PathVariable int pessoaId) {
+        return sugestaoService.gerarSugestoes(usuario.id(), pessoaId);
     }
 
     /** POST porque cada chamada consulta a IA e pode gerar ideias diferentes. */
     @PostMapping("/ideias-ia")
-    public ResultadoIdeias ideiasComIa(@PathVariable int pessoaId) {
-        return sugestaoService.gerarIdeiasComIa(pessoaId);
+    public ResultadoIdeias ideiasComIa(UsuarioLogado usuario, @PathVariable int pessoaId) {
+        return sugestaoService.gerarIdeiasComIa(usuario.id(), pessoaId);
     }
 }

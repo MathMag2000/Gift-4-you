@@ -27,20 +27,20 @@ public class FavoritoController {
     }
 
     @GetMapping
-    public List<Favorito> listar(@RequestParam(required = false) Integer pessoaId) {
-        return favoritoService.listar(pessoaId);
+    public List<Favorito> listar(UsuarioLogado usuario, @RequestParam(required = false) Integer pessoaId) {
+        return favoritoService.listar(usuario.id(), pessoaId);
     }
 
     /** Favoritar o mesmo item de novo devolve o favorito existente. */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Favorito favoritar(@RequestBody DadosFavorito dados) {
-        return favoritoService.favoritar(dados);
+    public Favorito favoritar(UsuarioLogado usuario, @RequestBody DadosFavorito dados) {
+        return favoritoService.favoritar(usuario.id(), dados);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void remover(@PathVariable int id) {
-        favoritoService.remover(id);
+    public void remover(UsuarioLogado usuario, @PathVariable int id) {
+        favoritoService.remover(usuario.id(), id);
     }
 }

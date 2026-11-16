@@ -21,12 +21,12 @@ public class HistoricoController {
     }
 
     @GetMapping
-    public List<RegistroHistorico> listar(@RequestParam(required = false) Integer pessoaId) {
-        return historicoService.listar(pessoaId);
+    public List<RegistroHistorico> listar(UsuarioLogado usuario, @RequestParam(required = false) Integer pessoaId) {
+        return historicoService.listar(usuario.id(), pessoaId);
     }
 
     @GetMapping("/{id}")
-    public RegistroHistorico buscar(@PathVariable int id) {
-        return historicoService.buscarPorId(id);
+    public RegistroHistorico buscar(UsuarioLogado usuario, @PathVariable int id) {
+        return historicoService.buscarPorId(usuario.id(), id);
     }
 }

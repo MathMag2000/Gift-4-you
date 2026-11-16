@@ -1,0 +1,16 @@
+# PostgreSQL para desenvolvimento, já com os dados padrão de application.properties.
+# Uso: docker compose up -d   (os dados ficam no volume gift4you-dados)
+services:
+  banco:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: gift4you
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - gift4you-dados:/var/lib/postgresql/data
+
+volumes:
+  gift4you-dados:

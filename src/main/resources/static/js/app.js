@@ -1,3 +1,5 @@
+import { api, EVENTO_SESSAO_EXPIRADA } from "./api.js";
+import { iniciarConta, mostrarDeslogado, mostrarLogado } from "./conta.js";
 import { atualizarFavoritos, iniciarFavoritos } from "./favoritos.js";
 import { atualizarHistorico, iniciarHistorico } from "./historico.js";
 import { carregarOpcoes, preencherSelects } from "./opcoes.js";
@@ -39,6 +41,27 @@ function substituirImagensComErro() {
 
 async function iniciar() {
     substituirImagensComErro();
+    iniciarConta();
+    window.addEventListener(EVENTO_SESSAO_EXPIRADA,
+        () => mostrarDeslogado("Sua sessão expirou. Entre novamente."), { once: true });
+
+    let conta;
+    try {
+        conta = await api.contaAtual();
+    } catch (erro) {
+        mostrarDeslogado();
+        mostrarErro(erro);
+        return;
+    }
+    if (!conta) {
+        mostrarDeslogado();
+        return;
+    }
+    mostrarLogado(conta);
+    await iniciarSite();
+}
+
+async function iniciarSite() {
     abas.forEach((aba) => aba.addEventListener("click", () => abrirSecao(aba.dataset.secao)));
     try {
         await carregarOpcoes();

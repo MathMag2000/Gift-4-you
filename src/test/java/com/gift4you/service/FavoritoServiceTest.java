@@ -37,13 +37,13 @@ class FavoritoServiceTest {
     private Favorito favoritarDoCatalogo(int pessoaId, int presenteId) {
         ItemSugerido item = new ItemSugerido(presenteId, null, null, null, List.of("combina com os gostos: café"),
                 null, null);
-        return cenario.favoritos.favoritar(new DadosFavorito(pessoaId, OrigemSugestao.CATALOGO, item));
+        return cenario.favoritos.favoritar(Cenario.USUARIO, new DadosFavorito(pessoaId, OrigemSugestao.CATALOGO, item));
     }
 
     private Favorito favoritarIdeia(int pessoaId, String nome, String preco) {
         ItemSugerido item = new ItemSugerido(null, nome, " Utensílios ", preco == null ? null : new BigDecimal(preco),
                 List.of("Bom para quem gosta de café", " "), "javascript:alert(1)", "https://falsa/img.jpg");
-        return cenario.favoritos.favoritar(new DadosFavorito(pessoaId, OrigemSugestao.IA, item));
+        return cenario.favoritos.favoritar(Cenario.USUARIO, new DadosFavorito(pessoaId, OrigemSugestao.IA, item));
     }
 
     @Test
@@ -51,7 +51,7 @@ class FavoritoServiceTest {
         ItemSugerido enviado = new ItemSugerido(kitCafe.getId(), "Nome falso", "Outra", new BigDecimal("1"), List.of(),
                 "https://golpe.exemplo.com", "https://golpe.exemplo.com/img.jpg");
 
-        Favorito favorito = cenario.favoritos.favoritar(new DadosFavorito(ana.getId(), OrigemSugestao.CATALOGO, enviado));
+        Favorito favorito = cenario.favoritos.favoritar(Cenario.USUARIO, new DadosFavorito(ana.getId(), OrigemSugestao.CATALOGO, enviado));
 
         assertThat(favorito.getId()).isNotNull();
         assertThat(favorito.getItem().nome()).isEqualTo("Kit de café");
@@ -68,7 +68,7 @@ class FavoritoServiceTest {
         Favorito segundo = favoritarDoCatalogo(ana.getId(), kitCafe.getId());
 
         assertThat(segundo.getId()).isEqualTo(primeiro.getId());
-        assertThat(cenario.favoritos.listar(ana.getId())).hasSize(1);
+        assertThat(cenario.favoritos.listar(Cenario.USUARIO, ana.getId())).hasSize(1);
     }
 
     @Test
@@ -98,7 +98,7 @@ class FavoritoServiceTest {
         ItemSugerido item = new ItemSugerido(null, "Prensa Francesa", "Cozinha", new BigDecimal("120"), List.of(),
                 "https://www.amazon.com.br/dp/B07WXJ8GQP", "https://m.media-amazon.com/images/I/61abc.jpg");
 
-        Favorito favorito = cenario.favoritos.favoritar(new DadosFavorito(ana.getId(), OrigemSugestao.IA, item));
+        Favorito favorito = cenario.favoritos.favoritar(Cenario.USUARIO, new DadosFavorito(ana.getId(), OrigemSugestao.IA, item));
 
         assertThat(favorito.getItem().linkCompra()).isEqualTo("https://www.amazon.com.br/dp/B07WXJ8GQP");
         assertThat(favorito.getItem().imagemUrl()).isEqualTo("https://m.media-amazon.com/images/I/61abc.jpg");
@@ -111,8 +111,8 @@ class FavoritoServiceTest {
         favoritarDoCatalogo(ana.getId(), kitCafe.getId());
         favoritarDoCatalogo(bruno.getId(), kitCafe.getId());
 
-        assertThat(cenario.favoritos.listar(null)).hasSize(2);
-        assertThat(cenario.favoritos.listar(bruno.getId())).extracting(Favorito::getPessoaId).containsOnly(bruno.getId());
+        assertThat(cenario.favoritos.listar(Cenario.USUARIO, null)).hasSize(2);
+        assertThat(cenario.favoritos.listar(Cenario.USUARIO, bruno.getId())).extracting(Favorito::getPessoaId).containsOnly(bruno.getId());
     }
 
     @Test
@@ -120,7 +120,7 @@ class FavoritoServiceTest {
         Favorito primeiro = favoritarDoCatalogo(ana.getId(), kitCafe.getId());
         Favorito segundo = favoritarIdeia(ana.getId(), "Prensa Francesa", "120");
 
-        assertThat(cenario.favoritos.listar(ana.getId())).extracting(Favorito::getId)
+        assertThat(cenario.favoritos.listar(Cenario.USUARIO, ana.getId())).extracting(Favorito::getId)
                 .containsExactly(segundo.getId(), primeiro.getId());
     }
 
@@ -132,7 +132,7 @@ class FavoritoServiceTest {
                 .isInstanceOf(ValidacaoException.class).hasMessageContaining("maior que zero");
         assertThatThrownBy(() -> favoritarIdeia(ana.getId(), "Caneca", null))
                 .isInstanceOf(ValidacaoException.class).hasMessageContaining("preço");
-        assertThatThrownBy(() -> cenario.favoritos.favoritar(new DadosFavorito(ana.getId(), null, null)))
+        assertThatThrownBy(() -> cenario.favoritos.favoritar(Cenario.USUARIO, new DadosFavorito(ana.getId(), null, null)))
                 .isInstanceOf(ValidacaoException.class).hasMessageContaining("origem");
         assertThatThrownBy(() -> favoritarDoCatalogo(ana.getId(), 999))
                 .isInstanceOf(PresenteNaoEncontradoException.class);
@@ -144,10 +144,10 @@ class FavoritoServiceTest {
     void removeFavorito() {
         Favorito favorito = favoritarDoCatalogo(ana.getId(), kitCafe.getId());
 
-        cenario.favoritos.remover(favorito.getId());
+        cenario.favoritos.remover(Cenario.USUARIO, favorito.getId());
 
-        assertThat(cenario.favoritos.listar(ana.getId())).isEmpty();
-        assertThatThrownBy(() -> cenario.favoritos.remover(favorito.getId()))
+        assertThat(cenario.favoritos.listar(Cenario.USUARIO, ana.getId())).isEmpty();
+        assertThatThrownBy(() -> cenario.favoritos.remover(Cenario.USUARIO, favorito.getId()))
                 .isInstanceOf(FavoritoNaoEncontradoException.class);
     }
 
@@ -157,9 +157,9 @@ class FavoritoServiceTest {
         favoritarDoCatalogo(ana.getId(), kitCafe.getId());
         favoritarDoCatalogo(bruno.getId(), kitCafe.getId());
 
-        cenario.pessoas.remover(ana.getId());
+        cenario.pessoas.remover(Cenario.USUARIO, ana.getId());
 
-        assertThat(cenario.favoritos.listar(null)).extracting(Favorito::getPessoaId).containsExactly(bruno.getId());
+        assertThat(cenario.favoritos.listar(Cenario.USUARIO, null)).extracting(Favorito::getPessoaId).containsExactly(bruno.getId());
     }
 
     @Test
@@ -168,7 +168,7 @@ class FavoritoServiceTest {
 
         cenario.presentes.remover(kitCafe.getId());
 
-        assertThat(cenario.favoritos.listar(ana.getId())).singleElement()
+        assertThat(cenario.favoritos.listar(Cenario.USUARIO, ana.getId())).singleElement()
                 .satisfies(favorito -> assertThat(favorito.getItem().nome()).isEqualTo("Kit de café"));
     }
 }

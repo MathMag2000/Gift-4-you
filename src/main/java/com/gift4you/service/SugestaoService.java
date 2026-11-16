@@ -48,8 +48,8 @@ public class SugestaoService {
     }
 
     /** Gera as sugestões do catálogo e as registra no histórico. */
-    public List<SugestaoPresente> gerarSugestoes(int pessoaId) {
-        Pessoa pessoa = pessoaService.buscarPorId(pessoaId);
+    public List<SugestaoPresente> gerarSugestoes(int usuarioId, int pessoaId) {
+        Pessoa pessoa = pessoaService.buscarPorId(usuarioId, pessoaId);
         List<SugestaoPresente> sugestoes = presenteService.listar().stream()
                 .filter(presente -> dentroDoOrcamento(presente.getPreco(), pessoa.getOrcamento()))
                 .filter(presente -> !rejeitado(pessoa, textosDoPresente(presente)))
@@ -69,8 +69,8 @@ public class SugestaoService {
      * pois o modelo nem sempre respeita as restrições pedidas. Cada ideia aprovada é procurada na loja
      * para ganhar o link da página do produto, e o resultado vai para o histórico.
      */
-    public ResultadoIdeias gerarIdeiasComIa(int pessoaId) {
-        Pessoa pessoa = pessoaService.buscarPorId(pessoaId);
+    public ResultadoIdeias gerarIdeiasComIa(int usuarioId, int pessoaId) {
+        Pessoa pessoa = pessoaService.buscarPorId(usuarioId, pessoaId);
         List<IdeiaPresente> recebidas = geradorIdeias.gerarIdeias(pessoa, QUANTIDADE_IDEIAS_IA);
         List<IdeiaPresente> aprovadas = recebidas.stream()
                 .filter(ideia -> dentroDoOrcamento(ideia.precoEstimado(), pessoa.getOrcamento()))

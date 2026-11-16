@@ -18,10 +18,12 @@ public class HistoricoService implements OuvinteRemocaoPessoa {
             Comparator.comparing(RegistroHistorico::getRealizadoEm).thenComparing(RegistroHistorico::getId).reversed();
 
     private final HistoricoRepository repository;
+    private final PessoaService pessoaService;
     private final Clock relogio;
 
-    public HistoricoService(HistoricoRepository repository, Clock relogio) {
+    public HistoricoService(HistoricoRepository repository, PessoaService pessoaService, Clock relogio) {
         this.repository = repository;
+        this.pessoaService = pessoaService;
         this.relogio = relogio;
     }
 
@@ -31,17 +33,25 @@ public class HistoricoService implements OuvinteRemocaoPessoa {
     }
 
     /**
-     * @param pessoaId filtra pela pessoa; se nulo, lista o histórico de todas
+     * @param pessoaId filtra pela pessoa; se nulo, lista o histórico de todas as pessoas do usuário.
+     *                 Uma pessoa de outro usuário resulta numa lista vazia.
      */
-    public List<RegistroHistorico> listar(Integer pessoaId) {
-        List<RegistroHistorico> registros = pessoaId == null
-                ? repository.listarTodos()
-                : repository.listarPorPessoa(pessoaId);
+    public List<RegistroHistorico> listar(int usuarioId, Integer pessoaId) {
+        List<RegistroHistorico> registros;
+        if (pessoaId == null) {
+            registros = repository.listarPorPessoas(pessoaService.idsDasPessoas(usuarioId));
+        } else if (pessoaService.pertenceAoUsuario(usuarioId, pessoaId)) {
+            registros = repository.listarPorPessoa(pessoaId);
+        } else {
+            registros = List.of();
+        }
         return registros.stream().sorted(MAIS_RECENTES_PRIMEIRO).toList();
     }
 
-    public RegistroHistorico buscarPorId(int id) {
-        return repository.buscarPorId(id).orElseThrow(() -> new RegistroHistoricoNaoEncontradoException(id));
+    public RegistroHistorico buscarPorId(int usuarioId, int id) {
+        return repository.buscarPorId(id)
+                .filter(registro -> pessoaService.pertenceAoUsuario(usuarioId, registro.getPessoaId()))
+                .orElseThrow(() -> new RegistroHistoricoNaoEncontradoException(id));
     }
 
     @Override

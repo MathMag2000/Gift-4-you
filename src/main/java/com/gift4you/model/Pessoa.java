@@ -5,6 +5,8 @@ import java.util.List;
 public class Pessoa implements Identificavel {
 
     private Integer id;
+    /** Conta que cadastrou a pessoa; somente ela pode consultá-la ou alterá-la. */
+    private final int usuarioId;
     private String nome;
     private int idade;
     private Vinculo vinculo;
@@ -14,7 +16,8 @@ public class Pessoa implements Identificavel {
     private Ocasiao ocasiao;
     private FaixaOrcamento orcamento;
 
-    public Pessoa(DadosPessoa dados) {
+    public Pessoa(int usuarioId, DadosPessoa dados) {
+        this.usuarioId = usuarioId;
         atualizar(dados);
     }
 
@@ -36,6 +39,14 @@ public class Pessoa implements Identificavel {
     @Override
     public void setId(Integer id) {
         this.id = id;
+    }
+
+    public int getUsuarioId() {
+        return usuarioId;
+    }
+
+    public boolean pertenceA(int idUsuario) {
+        return usuarioId == idUsuario;
     }
 
     public String getNome() {

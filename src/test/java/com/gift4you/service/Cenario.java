@@ -32,6 +32,11 @@ import java.util.Optional;
  */
 class Cenario {
 
+    /** Dono das pessoas cadastradas pelos testes. */
+    static final int USUARIO = 1;
+    /** Outro usuário, para conferir que um não vê os dados do outro. */
+    static final int OUTRO_USUARIO = 2;
+
     final Clock relogio = Clock.fixed(Instant.parse("2026-10-08T12:00:00Z"), ZoneOffset.UTC);
     final List<IdeiaPresente> ideiasDaIa = new ArrayList<>();
     /** Links que o extrator falso recebeu. Links com "sem-imagem" simulam uma loja que bloqueia a leitura. */
@@ -43,7 +48,7 @@ class Cenario {
                 linksConsultados.add(link);
                 return link.contains("sem-imagem") ? Optional.empty() : Optional.of(link + "/foto.jpg");
             });
-    final HistoricoService historico = new HistoricoService(new HistoricoRepositoryEmMemoria(), relogio);
+    final HistoricoService historico = new HistoricoService(new HistoricoRepositoryEmMemoria(), pessoas, relogio);
     /** Resultados que a loja falsa "encontra", pelo nome da ideia. Nomes ausentes simulam produto não encontrado. */
     final Map<String, List<ProdutoLoja>> produtosNaLoja = new HashMap<>();
     /** Amazon real nos links e validações, mas sem acessar a internet na busca. */
@@ -64,7 +69,11 @@ class Cenario {
     }
 
     Pessoa cadastrarPessoa(String nome, List<String> gostos, List<String> naoGosta) {
-        return pessoas.cadastrar(new DadosPessoa(nome, 30, Vinculo.AMIGO, gostos, naoGosta,
+        return cadastrarPessoa(USUARIO, nome, gostos, naoGosta);
+    }
+
+    Pessoa cadastrarPessoa(int usuarioId, String nome, List<String> gostos, List<String> naoGosta) {
+        return pessoas.cadastrar(usuarioId, new DadosPessoa(nome, 30, Vinculo.AMIGO, gostos, naoGosta,
                 Ocasiao.ANIVERSARIO, new FaixaOrcamento(new BigDecimal("200"))));
     }
 

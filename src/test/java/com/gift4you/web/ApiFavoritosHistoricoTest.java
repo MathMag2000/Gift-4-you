@@ -1,13 +1,9 @@
 package com.gift4you.web;
 
-import com.gift4you.service.ExtratorImagemProduto;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.mock.web.MockHttpSession;
 
 import java.util.Optional;
 
@@ -20,21 +16,20 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Percorre a API como o site faz: cadastra, gera sugestões, consulta o histórico e favorita.
+ * Percorre a API como o site faz: entra na conta, cadastra, gera sugestões, consulta o histórico e favorita.
+ * Os dados passam pelo PostgreSQL.
  */
-@SpringBootTest(properties = "gemini.chave-api=")
-@AutoConfigureMockMvc
-class ApiFavoritosHistoricoTest {
+class ApiFavoritosHistoricoTest extends TesteComBanco {
 
-    @Autowired
-    private MockMvc mvc;
+    private MockHttpSession sessao;
 
-    /** Evita acessar a internet: a página da loja é simulada. */
-    @MockitoBean
-    private ExtratorImagemProduto extratorImagem;
+    @BeforeEach
+    void entrar() throws Exception {
+        sessao = cadastrarConta("Marcos", "marcos@exemplo.com");
+    }
 
     private void enviar(String caminho, String json) throws Exception {
-        mvc.perform(post(caminho).contentType(MediaType.APPLICATION_JSON).content(json))
+        mvc.perform(post(caminho).session(sessao).contentType(MediaType.APPLICATION_JSON).content(json))
                 .andExpect(status().isCreated());
     }
 
@@ -51,52 +46,74 @@ class ApiFavoritosHistoricoTest {
                  "caracteristicas":["café"],"ocasioes":["ANIVERSARIO"],
                  "linkCompra":"https://loja.exemplo.com/kit-cafe"}""");
 
-        mvc.perform(post("/api/presentes").contentType(MediaType.APPLICATION_JSON).content("""
+        mvc.perform(post("/api/presentes").session(sessao).contentType(MediaType.APPLICATION_JSON).content("""
                         {"nome":"X","categoria":"JOGOS","preco":10,"ocasioes":["NATAL"],"linkCompra":"javascript:alert(1)"}"""))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.mensagem").value(
                         "Informe um link para compra válido, começando com http:// ou https://."));
 
-        mvc.perform(get("/api/presentes/1"))
+        mvc.perform(get("/api/presentes/1").session(sessao))
                 .andExpect(jsonPath("$.linkCompra").value("https://loja.exemplo.com/kit-cafe"))
-                .andExpect(jsonPath("$.imagemUrl").value("https://img.exemplo.com/kit-cafe.jpg"));
+                .andExpect(jsonPath("$.imagemUrl").value("https://img.exemplo.com/kit-cafe.jpg"))
+                .andExpect(jsonPath("$.ocasioes[0]").value("ANIVERSARIO"))
+                .andExpect(jsonPath("$.caracteristicas[0]").value("café"));
 
-        mvc.perform(get("/api/pessoas/1/sugestoes"))
+        mvc.perform(get("/api/pessoas/1/sugestoes").session(sessao))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].presente.imagemUrl").value("https://img.exemplo.com/kit-cafe.jpg"));
 
-        mvc.perform(get("/api/historico").param("pessoaId", "1"))
+        mvc.perform(get("/api/historico").session(sessao).param("pessoaId", "1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].origem").value("CATALOGO"))
                 .andExpect(jsonPath("$[0].ocasiao").value("ANIVERSARIO"))
+                .andExpect(jsonPath("$[0].orcamento.maximo").value(200))
                 .andExpect(jsonPath("$[0].itens[0].nome").value("Kit de café"))
                 .andExpect(jsonPath("$[0].itens[0].categoria").value("Gastronomia"))
+                .andExpect(jsonPath("$[0].itens[0].motivos", hasSize(2)))
                 .andExpect(jsonPath("$[0].itens[0].linkCompra").value("https://loja.exemplo.com/kit-cafe"))
                 .andExpect(jsonPath("$[0].itens[0].imagemUrl").value("https://img.exemplo.com/kit-cafe.jpg"))
                 .andExpect(jsonPath("$[0].realizadoEm").isString());
 
-        mvc.perform(post("/api/favoritos").contentType(MediaType.APPLICATION_JSON).content("""
+        mvc.perform(post("/api/favoritos").session(sessao).contentType(MediaType.APPLICATION_JSON).content("""
                         {"pessoaId":1,"origem":"CATALOGO","item":{"presenteId":1,"motivos":["combina"]}}"""))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.item.nome").value("Kit de café"))
+                .andExpect(jsonPath("$.item.presenteId").value(1))
                 .andExpect(jsonPath("$.origem").value("CATALOGO"));
 
-        mvc.perform(get("/api/favoritos").param("pessoaId", "1"))
-                .andExpect(jsonPath("$", hasSize(1)));
+        mvc.perform(get("/api/favoritos").session(sessao).param("pessoaId", "1"))
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].item.motivos[0]").value("combina"));
 
-        mvc.perform(delete("/api/favoritos/1")).andExpect(status().isNoContent());
-        mvc.perform(delete("/api/favoritos/1"))
+        mvc.perform(delete("/api/favoritos/1").session(sessao)).andExpect(status().isNoContent());
+        mvc.perform(delete("/api/favoritos/1").session(sessao))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.mensagem").value("Favorito com id 1 não encontrado."));
 
-        mvc.perform(post("/api/favoritos").contentType(MediaType.APPLICATION_JSON).content("""
+        mvc.perform(post("/api/favoritos").session(sessao).contentType(MediaType.APPLICATION_JSON).content("""
                         {"pessoaId":1,"origem":"IA","item":{"nome":"","preco":10}}"""))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.mensagem").value("O nome da ideia é obrigatório."));
 
-        mvc.perform(get("/api/historico/99")).andExpect(status().isNotFound());
+        mvc.perform(get("/api/historico/99").session(sessao)).andExpect(status().isNotFound());
         mvc.perform(get("/api/opcoes")).andExpect(jsonPath("$.origens[1].descricao").value("IA"));
+    }
+
+    @Test
+    void removerPessoaApagaOsFavoritosEOHistoricoDelaNoBanco() throws Exception {
+        enviar("/api/pessoas", """
+                {"nome":"Ana","idade":30,"vinculo":"AMIGO","gostos":[],"naoGosta":[],
+                 "ocasiao":"NATAL","orcamento":{"maximo":100}}""");
+        mvc.perform(get("/api/pessoas/1/sugestoes").session(sessao)).andExpect(status().isOk());
+        mvc.perform(post("/api/favoritos").session(sessao).contentType(MediaType.APPLICATION_JSON).content("""
+                        {"pessoaId":1,"origem":"IA","item":{"nome":"Caneca","preco":40}}"""))
+                .andExpect(status().isCreated());
+
+        mvc.perform(delete("/api/pessoas/1").session(sessao)).andExpect(status().isNoContent());
+
+        mvc.perform(get("/api/historico").session(sessao)).andExpect(jsonPath("$", hasSize(0)));
+        mvc.perform(get("/api/favoritos").session(sessao)).andExpect(jsonPath("$", hasSize(0)));
     }
 }

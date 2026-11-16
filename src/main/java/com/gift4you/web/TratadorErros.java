@@ -1,6 +1,8 @@
 package com.gift4you.web;
 
+import com.gift4you.exception.EmailJaCadastradoException;
 import com.gift4you.exception.IntegracaoIaException;
+import com.gift4you.exception.NaoAutenticadoException;
 import com.gift4you.exception.RegistroNaoEncontradoException;
 import com.gift4you.exception.ValidacaoException;
 import org.slf4j.Logger;
@@ -39,6 +41,18 @@ public class TratadorErros {
     @ExceptionHandler(RegistroNaoEncontradoException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public Erro naoEncontrado(RegistroNaoEncontradoException e) {
+        return new Erro(e.getMessage());
+    }
+
+    @ExceptionHandler(NaoAutenticadoException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public Erro naoAutenticado(NaoAutenticadoException e) {
+        return new Erro(e.getMessage());
+    }
+
+    @ExceptionHandler(EmailJaCadastradoException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public Erro emailJaCadastrado(EmailJaCadastradoException e) {
         return new Erro(e.getMessage());
     }
 
