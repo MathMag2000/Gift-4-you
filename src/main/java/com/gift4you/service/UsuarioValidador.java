@@ -8,7 +8,6 @@ import java.util.regex.Pattern;
 
 public class UsuarioValidador extends ValidadorBase {
 
-    public static final int TAMANHO_MAXIMO_NOME = 100;
     public static final int TAMANHO_MAXIMO_EMAIL = 254;
     public static final int TAMANHO_MINIMO_SENHA = 8;
     public static final int TAMANHO_MAXIMO_SENHA = 128;
@@ -23,10 +22,7 @@ public class UsuarioValidador extends ValidadorBase {
      * (nome sem espaços nas pontas e e-mail em minúsculas). A senha não é alterada.
      */
     public DadosCadastroUsuario validarCadastro(DadosCadastroUsuario dados) {
-        String nome = exigirTexto(dados.nome(), "O nome é obrigatório.");
-        if (nome.length() > TAMANHO_MAXIMO_NOME) {
-            throw new ValidacaoException("O nome deve ter no máximo " + TAMANHO_MAXIMO_NOME + " caracteres.");
-        }
+        String nome = validarNomePessoa(dados.nome(), "O nome é obrigatório.");
         String email = validarEmail(dados.email());
         validarSenha(dados.senha());
         return new DadosCadastroUsuario(nome, email, dados.senha());

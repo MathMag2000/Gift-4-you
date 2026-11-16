@@ -81,7 +81,7 @@
 
 ## Validações
 
-* [ ] Validar nome
+* [x] Validar nome
 * [x] Validar idade
 * [x] Validar orçamento
 * [x] Impedir orçamento mínimo maior que o máximo
@@ -89,12 +89,12 @@
 
 ## Testes
 
-* [ ] Testar cadastro de pessoa
-* [ ] Testar alteração de pessoa
-* [ ] Testar remoção de pessoa
-* [ ] Testar cadastro de presente
-* [ ] Testar filtros de orçamento
-* [ ] Testar geração de sugestões
+* [x] Testar cadastro de pessoa
+* [x] Testar alteração de pessoa
+* [x] Testar remoção de pessoa
+* [x] Testar cadastro de presente
+* [x] Testar filtros de orçamento
+* [x] Testar geração de sugestões
 * [x] Testar favoritos
 * [x] Testar histórico
 

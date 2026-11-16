@@ -13,10 +13,10 @@ public class PessoaValidador extends ValidadorBase {
 
     /**
      * Valida os dados informados e devolve uma cópia normalizada
-     * (nome sem espaços nas pontas e listas em minúsculas, sem itens vazios ou repetidos).
+     * (nome sem espaços nas pontas ou repetidos e listas em minúsculas, sem itens vazios ou repetidos).
      */
     public DadosPessoa validar(DadosPessoa dados) {
-        String nome = exigirTexto(dados.nome(), "O nome é obrigatório.");
+        String nome = validarNomePessoa(dados.nome(), "O nome é obrigatório.");
         List<String> gostos = normalizarLista(dados.gostos());
         List<String> naoGosta = normalizarLista(dados.naoGosta());
 
