@@ -64,7 +64,7 @@
 * [x] Criar API REST de pessoas, presentes e sugestões
 * [x] Criar páginas de cadastro de pessoas e presentes
 * [x] Criar página de sugestões (catálogo e IA)
-* [ ] Persistir os dados em banco de dados
+* [x] Persistir os dados em banco de dados (PostgreSQL)
 * [ ] Publicar o site
 
 ## Favoritos
@@ -113,3 +113,13 @@
 * [x] Adicionar código-fonte
 * [x] Criar primeiro commit
 * [x] Fazer push para o GitHub
+
+## Conta e autenticação
+
+* [x] Criar classe Usuario
+* [x] Implementar cadastro de usuário
+* [x] Implementar login de usuário
+* [x] Validar e-mail e senha
+* [x] Implementar logout
+* [x] Associar pessoas cadastradas à conta do usuário
+* [x] Testar cadastro, login, logout e separação dos dados entre contas

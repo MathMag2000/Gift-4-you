@@ -9,6 +9,7 @@ ideias com IA, com link de compra. As sugestões podem ser favoritadas e ficam g
 | Ferramenta | Versão | Observação |
 |---|---|---|
 | [Java (JDK)](https://adoptium.net/) | **25** | Obrigatório. |
+| [PostgreSQL](https://www.postgresql.org/download/) | 14 ou mais recente | Obrigatório. Guarda contas, pessoas, presentes, favoritos e histórico. |
 | [Git](https://git-scm.com/) | qualquer | Para baixar o projeto. |
 | Maven | — | **Não precisa instalar**: o projeto já traz o Maven Wrapper (`mvnw`). |
 | Chave da API Gemini | — | Opcional. Só é necessária para o botão **Ideias com IA**. |
@@ -28,6 +29,46 @@ A variável de ambiente `JAVA_HOME` deve apontar para a pasta do JDK 25. Sem ela
 git clone https://github.com/MathMag2000/Gift-4-you.git
 cd Gift-4-you
 ```
+
+## Banco de dados (PostgreSQL)
+
+O sistema precisa de um banco PostgreSQL chamado `gift4you`. As **tabelas são criadas automaticamente** na
+primeira execução (arquivo `src/main/resources/schema.sql`), e os dados existentes são mantidos nas seguintes.
+
+**Opção 1: PostgreSQL instalado no computador**
+
+1. Instale o PostgreSQL. Durante a instalação, anote a senha escolhida para o usuário `postgres`.
+2. Crie o banco `gift4you`, pelo pgAdmin ou pelo terminal:
+
+   ```bash
+   psql -U postgres -c "CREATE DATABASE gift4you"
+   ```
+
+3. Se a senha do usuário `postgres` **não** for `postgres`, copie `banco.properties.exemplo` com o nome
+   **`banco.properties`** e coloque a sua senha nele:
+
+   ```powershell
+   Copy-Item banco.properties.exemplo banco.properties     # Linux/macOS: cp banco.properties.exemplo banco.properties
+   ```
+
+   ```properties
+   spring.datasource.password=sua-senha
+   ```
+
+   O arquivo `banco.properties` é ignorado pelo Git, então a senha **não vai para o GitHub**.
+
+**Opção 2: Docker**
+
+```bash
+docker compose up -d
+```
+
+Sobe um PostgreSQL já com o banco `gift4you` e os dados padrão (usuário e senha `postgres`). Não é preciso
+criar o `banco.properties`.
+
+**Configuração padrão:** `jdbc:postgresql://localhost:5432/gift4you`, usuário `postgres`, senha `postgres`.
+Também é possível usar as variáveis de ambiente `DB_URL`, `DB_USERNAME` e `DB_PASSWORD`. Se o arquivo
+`banco.properties` existir, os valores dele têm prioridade.
 
 ## Executando
 
@@ -49,6 +90,14 @@ Quando aparecer `Tomcat started on port 8080`, abra no navegador:
 **http://localhost:8080**
 
 Para parar o servidor, pressione `Ctrl + C` no terminal.
+
+### Conta de usuário
+
+Ao abrir o site, crie uma conta (nome, e-mail e senha com pelo menos 8 caracteres, com letras e números) ou
+entre com uma conta existente. Cada conta vê **somente as pessoas que cadastrou**, com os favoritos e o histórico
+delas. O catálogo de presentes é compartilhado entre todas as contas. O botão **Sair**, no topo, encerra a sessão.
+
+As senhas não são guardadas: o banco guarda apenas um hash PBKDF2-SHA256 com sal aleatório.
 
 ### Ideias com IA (opcional)
 
@@ -104,6 +153,9 @@ execute a classe `com.gift4you.Gift4YouApplication`. A chave da IA é lida do me
 ./mvnw test             # no Windows: .\mvnw.cmd test
 ```
 
+Os testes de API usam um PostgreSQL embutido, baixado automaticamente pelo Maven: não precisam do banco
+instalado nem de Docker.
+
 ## Problemas comuns
 
 | Problema | Solução |
@@ -113,10 +165,14 @@ execute a classe `com.gift4you.Gift4YouApplication`. A chave da IA é lida do me
 | `release version 25 not supported` | O Java instalado é mais antigo. Instale o JDK 25. |
 | "IA não configurada" ao gerar ideias | Crie o arquivo `chave-ia.properties` na pasta do projeto (veja acima) e reinicie o servidor. |
 | "O Gemini recusou a chave de API" | Confira se a chave em `chave-ia.properties` foi copiada inteira, sem espaços. |
+| `Connection to localhost:5432 refused` | O PostgreSQL não está rodando. Inicie o serviço do PostgreSQL ou rode `docker compose up -d`. |
+| `password authentication failed for user "postgres"` | A senha do banco está errada. Coloque a senha certa em `banco.properties` (veja acima). |
+| `database "gift4you" does not exist` | Crie o banco: `psql -U postgres -c "CREATE DATABASE gift4you"`. |
 
 ## Observações
 
-- Os dados ficam **em memória**: ao reiniciar o servidor, pessoas, presentes, favoritos e histórico são apagados.
+- Os dados ficam no **PostgreSQL** e continuam lá quando o servidor reinicia. Já o login fica na memória do
+  servidor: ao reiniciá-lo, é preciso entrar de novo.
 - As ideias da IA são procuradas na Amazon para exibir o produto, o preço e a foto. Se a Amazon bloquear a
   consulta, a ideia aparece com o preço estimado e um link de busca.
 
@@ -127,10 +183,11 @@ src/main/java/com/gift4you/
 ├── web/          controladores da API REST
 ├── service/      regras de negócio e validações
 ├── model/        entidades e enums
-├── repository/   armazenamento dos dados
+├── repository/   armazenamento dos dados (PostgreSQL via JDBC; versões em memória para os testes)
 ├── integracao/   Gemini, Amazon e leitura de páginas das lojas
 ├── config/       montagem dos objetos da aplicação
 └── exception/    exceções do sistema
 src/main/resources/static/   site (HTML, CSS e JavaScript)
+src/main/resources/schema.sql   tabelas do banco de dados
 src/test/                    testes automatizados
 ```
