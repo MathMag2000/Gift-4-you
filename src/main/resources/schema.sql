@@ -24,6 +24,10 @@ CREATE TABLE IF NOT EXISTS pessoa (
 
 CREATE INDEX IF NOT EXISTS idx_pessoa_usuario ON pessoa (usuario_id);
 
+-- Campos adicionados depois da criação da tabela: bancos já existentes recebem as colunas aqui.
+ALTER TABLE pessoa ADD COLUMN IF NOT EXISTS estilos     TEXT[] NOT NULL DEFAULT '{}';
+ALTER TABLE pessoa ADD COLUMN IF NOT EXISTS observacoes TEXT   NOT NULL DEFAULT '';
+
 -- Catálogo de presentes, compartilhado por todos os usuários.
 CREATE TABLE IF NOT EXISTS presente (
     id              SERIAL PRIMARY KEY,

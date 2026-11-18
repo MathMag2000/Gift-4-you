@@ -187,7 +187,10 @@ src/main/java/com/gift4you/
 ├── integracao/   Gemini, Amazon e leitura de páginas das lojas
 ├── config/       montagem dos objetos da aplicação
 └── exception/    exceções do sistema
-src/main/resources/static/   site (HTML, CSS e JavaScript)
+src/main/resources/static/   site (HTML, CSS e JavaScript, sem frameworks), no visual do wireframe do Figma
+├── js/app.js                entrada do site: sessão, menu lateral e rotas (#/inicio, #/pessoas, ...)
+├── js/telas/                uma tela por arquivo (início, pessoas, sugestões, favoritos, histórico, catálogo...)
+└── js/componentes/          peças reutilizadas: cartões de produto, janela de detalhes, formulários, ícones
 src/main/resources/schema.sql   tabelas do banco de dados
 src/test/                    testes automatizados
 ```

@@ -59,11 +59,13 @@ export const api = {
     sair: () => requisitar("POST", "/api/conta/logout", undefined, SEM_AVISO),
 
     listarPessoas: () => requisitar("GET", "/api/pessoas"),
+    buscarPessoa: (id) => requisitar("GET", `/api/pessoas/${id}`),
     cadastrarPessoa: (dados) => requisitar("POST", "/api/pessoas", dados),
     alterarPessoa: (id, dados) => requisitar("PUT", `/api/pessoas/${id}`, dados),
     removerPessoa: (id) => requisitar("DELETE", `/api/pessoas/${id}`),
 
     listarPresentes: () => requisitar("GET", "/api/presentes"),
+    buscarPresente: (id) => requisitar("GET", `/api/presentes/${id}`),
     cadastrarPresente: (dados) => requisitar("POST", "/api/presentes", dados),
     alterarPresente: (id, dados) => requisitar("PUT", `/api/presentes/${id}`, dados),
     removerPresente: (id) => requisitar("DELETE", `/api/presentes/${id}`),

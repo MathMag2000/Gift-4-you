@@ -1,44 +1,64 @@
-// Tela de login e cadastro de conta, e o botão "Sair".
+// Tela de login e de criação de conta, no estilo do wireframe.
 import { api } from "./api.js";
+import { logotipo } from "./componentes/icones.js";
 import { mostrarAviso, mostrarErro } from "./util.js";
-
-const formLogin = document.getElementById("form-login");
-const formCadastro = document.getElementById("form-cadastro");
-const abasConta = document.querySelectorAll("[data-conta]");
 
 const FORMATO_EMAIL = /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/;
 
-export function iniciarConta() {
-    abasConta.forEach((aba) => aba.addEventListener("click", () => mostrarFormulario(aba.dataset.conta)));
-    formLogin.addEventListener("submit", entrar);
-    formCadastro.addEventListener("submit", cadastrar);
-    document.getElementById("botao-sair").addEventListener("click", sair);
+const MODOS = {
+    login: {
+        titulo: "Entrar",
+        subtitulo: "Acesse sua conta para continuar.",
+        botao: "Entrar →",
+        links: `<button type="button" class="link-conta" data-modo="cadastro">
+                    Ainda não tenho conta — <strong>Criar conta</strong></button>`,
+    },
+    cadastro: {
+        titulo: "Criar conta",
+        subtitulo: "Preencha os dados para criar sua conta.",
+        botao: "Criar conta →",
+        links: `<button type="button" class="link-conta" data-modo="login">← Já tenho uma conta</button>`,
+    },
+};
+
+function campo(rotulo, entrada) {
+    return `<label class="campo"><span class="campo__rotulo">${rotulo}</span>${entrada}</label>`;
 }
 
-/** Mostra o site da conta logada. */
-export function mostrarLogado(conta) {
-    document.getElementById("nome-usuario").textContent = `Olá, ${conta.nome}`;
-    document.body.dataset.estado = "logado";
-}
+function desenhar(tela, modo) {
+    const config = MODOS[modo];
+    const cadastro = modo === "cadastro";
+    tela.innerHTML = `
+        <div class="login">
+            ${logotipo("marca--vertical")}
+            <form class="cartao login__cartao" novalidate>
+                <div>
+                    <h1 class="login__titulo">${config.titulo}</h1>
+                    <p class="login__subtitulo">${config.subtitulo}</p>
+                </div>
+                <div class="login__campos">
+                    ${cadastro ? campo("Nome", `<input name="nome" type="text" maxlength="100" autocomplete="name"
+                                               placeholder="Seu nome" required>`) : ""}
+                    ${campo("E-mail", `<input name="email" type="email" maxlength="254"
+                        autocomplete="${cadastro ? "email" : "username"}" placeholder="seu@email.com" required>`)}
+                    ${campo(cadastro ? "Senha <small>mínimo de 8 caracteres, com letras e números</small>" : "Senha",
+                        `<input name="senha" type="password" maxlength="128" placeholder="••••••••"
+                                autocomplete="${cadastro ? "new-password" : "current-password"}" required>`)}
+                    ${cadastro ? campo("Confirmar senha", `<input name="confirmacao" type="password" maxlength="128"
+                                       placeholder="••••••••" autocomplete="new-password" required>`) : ""}
+                </div>
+                <button type="submit" class="botao botao--bloco">${config.botao}</button>
+                <div class="login__links">${config.links}</div>
+            </form>
+        </div>`;
 
-/** Mostra a tela de login, com um aviso opcional (ex.: sessão expirada). */
-export function mostrarDeslogado(mensagem) {
-    document.body.dataset.estado = "deslogado";
-    mostrarFormulario("login");
-    if (mensagem) {
-        mostrarAviso(mensagem, "erro");
-    }
-}
-
-function mostrarFormulario(nome) {
-    abasConta.forEach((aba) => {
-        const ativa = aba.dataset.conta === nome;
-        aba.classList.toggle("aba--ativa", ativa);
-        aba.setAttribute("aria-selected", ativa);
+    tela.querySelector("[data-modo]").addEventListener("click", (evento) => desenhar(tela, evento.currentTarget.dataset.modo));
+    const formulario = tela.querySelector("form");
+    formulario.addEventListener("submit", (evento) => {
+        evento.preventDefault();
+        enviar(formulario, modo);
     });
-    formLogin.hidden = nome !== "login";
-    formCadastro.hidden = nome !== "cadastro";
-    (nome === "login" ? formLogin : formCadastro).querySelector("input").focus();
+    formulario.querySelector("input").focus();
 }
 
 /** Validação feita também no navegador, para avisar antes de enviar; o servidor valida de novo. */
@@ -65,46 +85,53 @@ function validarCadastro({ nome, email, senha }, confirmacao) {
  * Depois de entrar, recarrega a página: o site começa do zero com os dados da conta, sem restos
  * de uma conta usada antes no mesmo navegador.
  */
-async function enviar(formulario, acao) {
+async function enviar(formulario, modo) {
+    const campos = formulario.elements;
+    let acao;
+    if (modo === "login") {
+        if (!campos.email.value.trim() || !campos.senha.value) {
+            mostrarAviso("Informe o e-mail e a senha.", "erro");
+            return;
+        }
+        acao = () => api.entrar({ email: campos.email.value, senha: campos.senha.value });
+    } else {
+        const dados = { nome: campos.nome.value, email: campos.email.value, senha: campos.senha.value };
+        const erro = validarCadastro(dados, campos.confirmacao.value);
+        if (erro) {
+            mostrarAviso(erro, "erro");
+            return;
+        }
+        acao = () => api.cadastrarConta(dados);
+    }
+
     const botao = formulario.querySelector('button[type="submit"]');
     botao.disabled = true;
     try {
         await acao();
-        window.location.reload();
+        location.hash = "#/inicio";
+        location.reload();
     } catch (erro) {
         mostrarErro(erro);
         botao.disabled = false;
     }
 }
 
-function entrar(evento) {
-    evento.preventDefault();
-    const campos = formLogin.elements;
-    if (!campos.email.value.trim() || !campos.senha.value) {
-        mostrarAviso("Informe o e-mail e a senha.", "erro");
-        return;
+/** Mostra a tela de login, com um aviso opcional (ex.: sessão expirada). */
+export function mostrarDeslogado(mensagem) {
+    document.body.dataset.estado = "deslogado";
+    desenhar(document.getElementById("tela-login"), "login");
+    if (mensagem) {
+        mostrarAviso(mensagem, "erro");
     }
-    return enviar(formLogin, () => api.entrar({ email: campos.email.value, senha: campos.senha.value }));
 }
 
-function cadastrar(evento) {
-    evento.preventDefault();
-    const campos = formCadastro.elements;
-    const dados = { nome: campos.nome.value, email: campos.email.value, senha: campos.senha.value };
-    const erro = validarCadastro(dados, campos.confirmacao.value);
-    if (erro) {
-        mostrarAviso(erro, "erro");
-        return;
-    }
-    return enviar(formCadastro, () => api.cadastrarConta(dados));
-}
-
-async function sair() {
+export async function sair() {
     try {
         await api.sair();
     } catch (erro) {
         mostrarErro(erro);
         return;
     }
-    window.location.reload();
+    location.hash = "";
+    location.reload();
 }

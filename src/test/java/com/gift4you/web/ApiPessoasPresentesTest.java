@@ -80,6 +80,25 @@ class ApiPessoasPresentesTest extends TesteComBanco {
     }
 
     @Test
+    void guardaEstiloEInformacoesAdicionaisNoBanco() throws Exception {
+        mvc.perform(json(post("/api/pessoas"), ANA.replace("\"ocasiao\"",
+                        "\"estilos\":[\"prático\",\"criativo\"],\"observacoes\":\"Mudou de casa.\",\"ocasiao\"")))
+                .andExpect(status().isCreated());
+
+        mvc.perform(get("/api/pessoas/1").session(sessao))
+                .andExpect(jsonPath("$.estilos[0]").value("prático"))
+                .andExpect(jsonPath("$.estilos[1]").value("criativo"))
+                .andExpect(jsonPath("$.observacoes").value("Mudou de casa."));
+
+        mvc.perform(json(put("/api/pessoas/1"), ANA)).andExpect(status().isOk());
+        mvc.perform(get("/api/pessoas/1").session(sessao))
+                .andExpect(jsonPath("$.estilos", hasSize(0)))
+                .andExpect(jsonPath("$.observacoes").value(""));
+
+        mvc.perform(get("/api/opcoes")).andExpect(jsonPath("$.estilos[0].valor").value("prático"));
+    }
+
+    @Test
     void recusaPessoaInvalidaSemGravar() throws Exception {
         mvc.perform(json(post("/api/pessoas"), ANA.replace("  Ana   Maria ", "Ana123")))
                 .andExpect(status().isBadRequest())

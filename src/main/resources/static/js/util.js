@@ -1,7 +1,9 @@
+import { marcadorImagem } from "./componentes/icones.js";
+
 const formatoMoeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
 export function formatarMoeda(valor) {
-    return formatoMoeda.format(valor);
+    return valor === null || valor === undefined ? "—" : formatoMoeda.format(valor);
 }
 
 const formatoDataHora = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" });
@@ -26,33 +28,39 @@ export function urlSegura(url) {
     return typeof url === "string" && /^https?:\/\//i.test(url) ? url : null;
 }
 
+/** Endereço da loja sem "https://", para exibir (ex.: www.amazon.com.br/dp/B0...). */
+export function enderecoParaExibir(url) {
+    const endereco = urlSegura(url);
+    if (!endereco) {
+        return "";
+    }
+    let legivel = endereco;
+    try {
+        legivel = decodeURI(endereco); // "%20" vira espaço, "%C3%A9" vira "é"
+    } catch {
+        // Endereço com codificação inválida: mostra como veio.
+    }
+    return legivel.replace(/^https?:\/\//i, "").replace(/\/$/, "");
+}
+
 /**
- * Imagem do produto vinda da loja. Sem imagem, ou se ela não carregar, mostra um ícone no lugar
- * (ver o tratamento de erro de imagens em app.js).
+ * Imagem do produto vinda da loja. Sem imagem, ou se ela não carregar, mostra o quadro com "X"
+ * do wireframe (ver o tratamento de erro de imagens em app.js).
  */
 export function imagemProduto(url, descricao, classeExtra = "") {
     const endereco = urlSegura(url);
     if (!endereco) {
-        return `<div class="imagem-produto imagem-produto--vazia ${classeExtra}" aria-hidden="true">🎁</div>`;
+        return marcadorImagem(classeExtra);
     }
     return `<img class="imagem-produto ${classeExtra}" src="${escaparHtml(endereco)}" alt="${escaparHtml(descricao)}"
                  loading="lazy" referrerpolicy="no-referrer">`;
 }
 
-/** Torna o conteúdo (imagem ou nome do produto) clicável, abrindo a loja em outra aba. */
-export function comLink(url, conteudoHtml) {
-    const endereco = urlSegura(url);
-    return endereco
-        ? `<a class="link-produto" href="${escaparHtml(endereco)}" target="_blank" rel="noopener noreferrer">${conteudoHtml}</a>`
-        : conteudoHtml;
-}
-
-export function linkCompra(url, texto = "Comprar na loja ↗") {
-    const endereco = urlSegura(url);
-    return endereco
-        ? `<a class="botao botao--comprar botao--pequeno" href="${escaparHtml(endereco)}" target="_blank"
-              rel="noopener noreferrer">${texto}</a>`
-        : "";
+/** Quadro com "X" que substitui uma imagem que não carregou, mantendo as classes de tamanho dela. */
+export function marcadorErroImagem(classes) {
+    const modelo = document.createElement("template");
+    modelo.innerHTML = marcadorImagem(classes.replace("imagem-produto", "").trim());
+    return modelo.content.firstElementChild;
 }
 
 export function textoParaLista(texto) {
@@ -65,21 +73,29 @@ export function listaParaTexto(lista) {
 
 /** Campo vazio vira null, para o servidor informar que é obrigatório. */
 export function numeroOuNulo(valor) {
-    return valor === "" ? null : Number(valor);
+    const texto = String(valor).trim().replace(/^R\$\s*/i, "");
+    if (texto === "") {
+        return null;
+    }
+    // Aceita "1.299,90" e "1299.90".
+    const normalizado = texto.includes(",") ? texto.replaceAll(".", "").replace(",", ".") : texto;
+    return Number(normalizado);
 }
 
 export function textoOuNulo(valor) {
     return valor === "" ? null : valor;
 }
 
-export function etiquetas(itens, classeExtra = "") {
-    if (itens.length === 0) {
-        return "-";
+export function capitalizar(texto) {
+    return texto ? texto.charAt(0).toUpperCase() + texto.slice(1) : texto;
+}
+
+/** Lista para leitura: "café, música e livros". */
+export function listaPorExtenso(itens) {
+    if (!itens || itens.length === 0) {
+        return "";
     }
-    const html = itens
-        .map((item) => `<span class="etiqueta ${classeExtra}">${escaparHtml(item)}</span>`)
-        .join("");
-    return `<span class="etiquetas">${html}</span>`;
+    return itens.length === 1 ? itens[0] : `${itens.slice(0, -1).join(", ")} e ${itens.at(-1)}`;
 }
 
 let temporizadorAviso;
@@ -95,4 +111,17 @@ export function mostrarAviso(mensagem, tipo = "sucesso") {
 
 export function mostrarErro(erro) {
     mostrarAviso(erro.message, "erro");
+}
+
+/** Desabilita o botão enquanto a ação roda, mostrando um texto de espera. */
+export async function comBotaoOcupado(botao, textoEspera, acao) {
+    const textoOriginal = botao.innerHTML;
+    botao.disabled = true;
+    botao.textContent = textoEspera;
+    try {
+        return await acao();
+    } finally {
+        botao.disabled = false;
+        botao.innerHTML = textoOriginal;
+    }
 }

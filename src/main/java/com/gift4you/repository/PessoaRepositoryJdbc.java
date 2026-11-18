@@ -18,7 +18,7 @@ import static com.gift4you.repository.ColunasSql.textos;
 public class PessoaRepositoryJdbc implements PessoaRepository {
 
     private static final String COLUNAS = """
-            SELECT id, usuario_id, nome, idade, vinculo, gostos, nao_gosta, ocasiao, orcamento_maximo
+            SELECT id, usuario_id, nome, idade, vinculo, gostos, nao_gosta, estilos, ocasiao, orcamento_maximo, observacoes
             FROM pessoa""";
 
     private static final RowMapper<Pessoa> MAPEADOR = (rs, linha) -> {
@@ -28,8 +28,10 @@ public class PessoaRepositoryJdbc implements PessoaRepository {
                 lerEnum(rs, "vinculo", Vinculo.class),
                 lerTextos(rs, "gostos"),
                 lerTextos(rs, "nao_gosta"),
+                lerTextos(rs, "estilos"),
                 lerEnum(rs, "ocasiao", Ocasiao.class),
-                new FaixaOrcamento(rs.getBigDecimal("orcamento_maximo")));
+                new FaixaOrcamento(rs.getBigDecimal("orcamento_maximo")),
+                rs.getString("observacoes"));
         Pessoa pessoa = new Pessoa(rs.getInt("usuario_id"), dados);
         pessoa.setId(rs.getInt("id"));
         return pessoa;
@@ -44,12 +46,13 @@ public class PessoaRepositoryJdbc implements PessoaRepository {
     @Override
     public Pessoa salvar(Pessoa pessoa) {
         pessoa.setId(jdbc.sql("""
-                        INSERT INTO pessoa (usuario_id, nome, idade, vinculo, gostos, nao_gosta, ocasiao, orcamento_maximo)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                        INSERT INTO pessoa (usuario_id, nome, idade, vinculo, gostos, nao_gosta, estilos, ocasiao,
+                                            orcamento_maximo, observacoes)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         RETURNING id""")
                 .params(pessoa.getUsuarioId(), pessoa.getNome(), pessoa.getIdade(), pessoa.getVinculo().name(),
-                        textos(pessoa.getGostos()), textos(pessoa.getNaoGosta()), pessoa.getOcasiao().name(),
-                        pessoa.getOrcamento().maximo())
+                        textos(pessoa.getGostos()), textos(pessoa.getNaoGosta()), textos(pessoa.getEstilos()),
+                        pessoa.getOcasiao().name(), pessoa.getOrcamento().maximo(), pessoa.getObservacoes())
                 .query(Integer.class)
                 .single());
         return pessoa;
@@ -59,12 +62,12 @@ public class PessoaRepositoryJdbc implements PessoaRepository {
     @Override
     public Pessoa atualizar(Pessoa pessoa) {
         jdbc.sql("""
-                        UPDATE pessoa SET nome = ?, idade = ?, vinculo = ?, gostos = ?, nao_gosta = ?, ocasiao = ?,
-                                          orcamento_maximo = ?
+                        UPDATE pessoa SET nome = ?, idade = ?, vinculo = ?, gostos = ?, nao_gosta = ?, estilos = ?,
+                                          ocasiao = ?, orcamento_maximo = ?, observacoes = ?
                         WHERE id = ?""")
                 .params(pessoa.getNome(), pessoa.getIdade(), pessoa.getVinculo().name(), textos(pessoa.getGostos()),
-                        textos(pessoa.getNaoGosta()), pessoa.getOcasiao().name(), pessoa.getOrcamento().maximo(),
-                        pessoa.getId())
+                        textos(pessoa.getNaoGosta()), textos(pessoa.getEstilos()), pessoa.getOcasiao().name(),
+                        pessoa.getOrcamento().maximo(), pessoa.getObservacoes(), pessoa.getId())
                 .update();
         return pessoa;
     }

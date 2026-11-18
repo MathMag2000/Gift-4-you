@@ -84,6 +84,35 @@ class PessoaServiceTest {
         }
 
         @Test
+        void guardaEstiloEInformacoesAdicionaisNormalizados() {
+            Pessoa pessoa = cadastrar(new DadosPessoa("Maria", 55, Vinculo.MAE, List.of(), List.of(),
+                    List.of(" Prático ", "prático", "CRIATIVO"), Ocasiao.NATAL, new FaixaOrcamento(BigDecimal.TEN),
+                    "  Acabou de se mudar.  "));
+
+            assertThat(pessoa.getEstilos()).containsExactly("prático", "criativo");
+            assertThat(pessoa.getObservacoes()).isEqualTo("Acabou de se mudar.");
+        }
+
+        @Test
+        void estiloEInformacoesAdicionaisSaoOpcionais() {
+            Pessoa pessoa = cadastrar(new DadosPessoa("Maria", 55, Vinculo.MAE, List.of(), List.of(), null,
+                    Ocasiao.NATAL, new FaixaOrcamento(BigDecimal.TEN), null));
+
+            assertThat(pessoa.getEstilos()).isEmpty();
+            assertThat(pessoa.getObservacoes()).isEmpty();
+        }
+
+        @Test
+        void recusaInformacoesAdicionaisLongasDemais() {
+            assertThat(cadastrar(new DadosPessoa("Maria", 55, Vinculo.MAE, List.of(), List.of(), List.of(),
+                    Ocasiao.NATAL, new FaixaOrcamento(BigDecimal.TEN), "a".repeat(500))).getObservacoes()).hasSize(500);
+            assertThatThrownBy(() -> cadastrar(new DadosPessoa("Maria", 55, Vinculo.MAE, List.of(), List.of(), List.of(),
+                    Ocasiao.NATAL, new FaixaOrcamento(BigDecimal.TEN), "a".repeat(501))))
+                    .isInstanceOf(ValidacaoException.class)
+                    .hasMessage("As informações adicionais devem ter no máximo 500 caracteres.");
+        }
+
+        @Test
         void listasAusentesViramListasVazias() {
             Pessoa pessoa = cadastrar(new DadosPessoa("Maria", 55, Vinculo.MAE, null, null, Ocasiao.NATAL,
                     new FaixaOrcamento(new BigDecimal("100"))));

@@ -13,8 +13,10 @@ public class Pessoa implements Identificavel {
     /** Gostos e interesses, num só campo. */
     private List<String> gostos;
     private List<String> naoGosta;
+    private List<String> estilos;
     private Ocasiao ocasiao;
     private FaixaOrcamento orcamento;
+    private String observacoes;
 
     public Pessoa(int usuarioId, DadosPessoa dados) {
         this.usuarioId = usuarioId;
@@ -27,8 +29,10 @@ public class Pessoa implements Identificavel {
         this.vinculo = dados.vinculo();
         this.gostos = List.copyOf(dados.gostos());
         this.naoGosta = List.copyOf(dados.naoGosta());
+        this.estilos = List.copyOf(dados.estilos());
         this.ocasiao = dados.ocasiao();
         this.orcamento = dados.orcamento();
+        this.observacoes = dados.observacoes();
     }
 
     @Override
@@ -67,6 +71,14 @@ public class Pessoa implements Identificavel {
 
     public List<String> getNaoGosta() {
         return naoGosta;
+    }
+
+    public List<String> getEstilos() {
+        return estilos;
+    }
+
+    public String getObservacoes() {
+        return observacoes;
     }
 
     public Ocasiao getOcasiao() {

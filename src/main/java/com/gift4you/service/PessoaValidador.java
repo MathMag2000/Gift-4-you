@@ -10,6 +10,7 @@ public class PessoaValidador extends ValidadorBase {
 
     private static final int IDADE_MINIMA = 0;
     private static final int IDADE_MAXIMA = 120;
+    public static final int TAMANHO_MAXIMO_OBSERVACOES = 500;
 
     /**
      * Valida os dados informados e devolve uma cópia normalizada
@@ -19,15 +20,26 @@ public class PessoaValidador extends ValidadorBase {
         String nome = validarNomePessoa(dados.nome(), "O nome é obrigatório.");
         List<String> gostos = normalizarLista(dados.gostos());
         List<String> naoGosta = normalizarLista(dados.naoGosta());
+        List<String> estilos = normalizarLista(dados.estilos());
 
         validarIdade(dados.idade());
         exigir(dados.vinculo(), "O vínculo é obrigatório.");
         exigir(dados.ocasiao(), "A ocasião é obrigatória.");
         validarOrcamento(dados.orcamento());
         validarSemConflito(gostos, naoGosta);
+        String observacoes = validarObservacoes(dados.observacoes());
 
         return new DadosPessoa(nome, dados.idade(), dados.vinculo(),
-                gostos, naoGosta, dados.ocasiao(), dados.orcamento());
+                gostos, naoGosta, estilos, dados.ocasiao(), dados.orcamento(), observacoes);
+    }
+
+    private String validarObservacoes(String observacoes) {
+        String texto = observacoes == null ? "" : observacoes.trim();
+        if (texto.length() > TAMANHO_MAXIMO_OBSERVACOES) {
+            throw new ValidacaoException(
+                    "As informações adicionais devem ter no máximo " + TAMANHO_MAXIMO_OBSERVACOES + " caracteres.");
+        }
+        return texto;
     }
 
     private void validarIdade(Integer idade) {
