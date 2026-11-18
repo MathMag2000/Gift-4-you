@@ -42,7 +42,7 @@ class SugestaoServiceTest {
 
     private Presente presente(String nome, Categoria categoria, String preco, List<String> caracteristicas,
                               Ocasiao... ocasioes) {
-        return cenario.presentes.cadastrar(new DadosPresente(nome, categoria, "", new BigDecimal(preco),
+        return cenario.presentes.cadastrar(Cenario.USUARIO, new DadosPresente(nome, categoria, "", new BigDecimal(preco),
                 caracteristicas, List.of(ocasioes), Cenario.linkDe(nome)));
     }
 

@@ -94,10 +94,21 @@ Para parar o servidor, pressione `Ctrl + C` no terminal.
 ### Conta de usuário
 
 Ao abrir o site, crie uma conta (nome, e-mail e senha com pelo menos 8 caracteres, com letras e números) ou
-entre com uma conta existente. Cada conta vê **somente as pessoas que cadastrou**, com os favoritos e o histórico
-delas. O catálogo de presentes é compartilhado entre todas as contas. O botão **Sair**, no topo, encerra a sessão.
+entre com uma conta existente. Cada conta vê **somente os próprios dados**: pessoas, catálogo de presentes,
+favoritos e histórico. O botão **Sair**, no menu lateral, encerra a sessão.
 
 As senhas não são guardadas: o banco guarda apenas um hash PBKDF2-SHA256 com sal aleatório.
+
+**Limites contra abuso** (os dados ficam na memória do servidor e zeram ao reiniciá-lo):
+
+| O quê | Limite padrão | Propriedade para mudar |
+|---|---|---|
+| Pedidos de ideias com IA | 10 por hora, por conta | `gift4you.limite.ia-por-hora` |
+| Senha errada no mesmo e-mail | 5 em 15 minutos; depois bloqueia o login desse e-mail por até 15 minutos | `gift4you.limite.login-falhas-por-email` |
+| Senha errada vinda do mesmo endereço IP | 20 em 15 minutos | `gift4you.limite.login-falhas-por-ip` |
+| Contas criadas pelo mesmo endereço IP | 10 por hora | `gift4you.limite.cadastros-por-ip-hora` |
+
+As propriedades também podem ser definidas por variável de ambiente, como `GIFT4YOU_LIMITE_IA_POR_HORA=20`.
 
 ### Ideias com IA (opcional)
 
@@ -146,6 +157,49 @@ java -jar target/gift-4-you-0.1.0.jar
 Abra a pasta do projeto (o IntelliJ reconhece o `pom.xml`), configure o SDK do projeto como Java 25 e
 execute a classe `com.gift4you.Gift4YouApplication`. A chave da IA é lida do mesmo arquivo
 `chave-ia.properties`, desde que o diretório de trabalho seja a pasta do projeto (o padrão do IntelliJ).
+
+## Publicando o site
+
+O projeto traz um `Dockerfile` pronto para hospedagens que aceitam Docker, como
+[Railway](https://railway.com) e [Render](https://render.com). As duas oferecem PostgreSQL e HTTPS.
+
+1. Crie um banco PostgreSQL na hospedagem e anote o servidor, a porta, o nome do banco, o usuário e a senha.
+2. Crie o serviço web a partir do repositório do GitHub. A hospedagem encontra o `Dockerfile` e monta a imagem.
+3. Defina as variáveis de ambiente no painel do serviço:
+
+   | Variável | Exemplo | Obrigatória |
+   |---|---|---|
+   | `DB_URL` | `jdbc:postgresql://servidor:5432/gift4you` | sim |
+   | `DB_USERNAME` | `gift4you` | sim |
+   | `DB_PASSWORD` | a senha do banco | sim |
+   | `GEMINI_API_KEY` | a chave da IA | não (sem ela, só o botão de IA fica indisponível) |
+
+   Atenção ao formato de `DB_URL`: ele começa com `jdbc:postgresql://`. Muitas hospedagens mostram o endereço
+   como `postgres://usuario:senha@servidor:5432/banco`. Nesse caso, use `jdbc:postgresql://servidor:5432/banco` em
+   `DB_URL` e coloque o usuário e a senha nas outras duas variáveis.
+
+4. Publique. Na primeira inicialização as tabelas são criadas sozinhas.
+
+A imagem liga o perfil **`producao`** (`src/main/resources/application-producao.properties`), que:
+
+- não inicia o servidor se faltar alguma variável do banco, e mostra qual falta;
+- envia o cookie de login somente por HTTPS (por isso o site publicado precisa de HTTPS, que as hospedagens
+  oferecem). Acessar por `http://` faz o login não funcionar;
+- usa o endereço real de quem acessa, repassado pelo proxy da hospedagem, para os limites de login;
+- não mostra detalhes internos nas páginas de erro.
+
+Em todos os perfis, o servidor envia cabeçalhos de segurança: a política de conteúdo (CSP) só permite os
+scripts do próprio site e impede que ele seja aberto dentro de outro site.
+
+Para testar o perfil de produção no computador, sem Docker:
+
+```powershell
+$env:SPRING_PROFILES_ACTIVE="producao"; $env:DB_URL="jdbc:postgresql://localhost:5432/gift4you"
+$env:DB_USERNAME="postgres"; $env:DB_PASSWORD="sua-senha"
+.\mvnw.cmd package -DskipTests; java -jar target\gift-4-you-0.1.0.jar
+```
+
+O login não funciona em `http://localhost`, porque o cookie exige HTTPS. Isso é esperado.
 
 ## Testes
 

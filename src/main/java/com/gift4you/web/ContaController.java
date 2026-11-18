@@ -53,14 +53,14 @@ public class ContaController {
     @PostMapping("/cadastro")
     @ResponseStatus(HttpStatus.CREATED)
     public Conta cadastrar(@RequestBody DadosCadastroUsuario dados, HttpServletRequest requisicao) {
-        Usuario usuario = usuarioService.cadastrar(dados);
+        Usuario usuario = usuarioService.cadastrar(dados, requisicao.getRemoteAddr());
         SessaoUsuario.entrar(requisicao, usuario);
         return Conta.de(usuario);
     }
 
     @PostMapping("/login")
     public Conta entrar(@RequestBody DadosLogin dados, HttpServletRequest requisicao) {
-        Usuario usuario = usuarioService.autenticar(dados);
+        Usuario usuario = usuarioService.autenticar(dados, requisicao.getRemoteAddr());
         SessaoUsuario.entrar(requisicao, usuario);
         return Conta.de(usuario);
     }

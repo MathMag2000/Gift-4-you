@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/** Catálogo de presentes da conta logada. */
 @RestController
 @RequestMapping("/api/presentes")
 public class PresenteController {
@@ -27,29 +28,29 @@ public class PresenteController {
     }
 
     @GetMapping
-    public List<Presente> listar() {
-        return presenteService.listar();
+    public List<Presente> listar(UsuarioLogado usuario) {
+        return presenteService.listar(usuario.id());
     }
 
     @GetMapping("/{id}")
-    public Presente buscar(@PathVariable int id) {
-        return presenteService.buscarPorId(id);
+    public Presente buscar(UsuarioLogado usuario, @PathVariable int id) {
+        return presenteService.buscarPorId(usuario.id(), id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Presente cadastrar(@RequestBody DadosPresente dados) {
-        return presenteService.cadastrar(dados);
+    public Presente cadastrar(UsuarioLogado usuario, @RequestBody DadosPresente dados) {
+        return presenteService.cadastrar(usuario.id(), dados);
     }
 
     @PutMapping("/{id}")
-    public Presente alterar(@PathVariable int id, @RequestBody DadosPresente dados) {
-        return presenteService.alterar(id, dados);
+    public Presente alterar(UsuarioLogado usuario, @PathVariable int id, @RequestBody DadosPresente dados) {
+        return presenteService.alterar(usuario.id(), id, dados);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void remover(@PathVariable int id) {
-        presenteService.remover(id);
+    public void remover(UsuarioLogado usuario, @PathVariable int id) {
+        presenteService.remover(usuario.id(), id);
     }
 }

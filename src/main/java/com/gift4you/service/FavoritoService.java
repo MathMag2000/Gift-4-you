@@ -43,7 +43,7 @@ public class FavoritoService implements OuvinteRemocaoPessoa {
         validador.validarPedido(dados);
         int pessoaId = pessoaService.buscarPorId(usuarioId, dados.pessoaId()).getId();
         ItemSugerido item = dados.origem() == OrigemSugestao.CATALOGO
-                ? itemDoCatalogo(dados.item())
+                ? itemDoCatalogo(usuarioId, dados.item())
                 : ideiaComLinkDaLoja(validador.validarIdeia(dados.item()), dados.item());
 
         return repository.listarPorPessoa(pessoaId).stream()
@@ -95,8 +95,8 @@ public class FavoritoService implements OuvinteRemocaoPessoa {
     }
 
     /** Usa os dados atuais do catálogo, e não os enviados, mantendo só os motivos da sugestão. */
-    private ItemSugerido itemDoCatalogo(ItemSugerido enviado) {
-        Presente presente = presenteService.buscarPorId(validador.exigirPresenteId(enviado));
+    private ItemSugerido itemDoCatalogo(int usuarioId, ItemSugerido enviado) {
+        Presente presente = presenteService.buscarPorId(usuarioId, validador.exigirPresenteId(enviado));
         return ItemSugerido.de(presente, enviado.motivos() == null ? List.of() : enviado.motivos());
     }
 }

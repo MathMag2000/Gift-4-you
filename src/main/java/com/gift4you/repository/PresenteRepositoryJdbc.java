@@ -19,7 +19,7 @@ import static com.gift4you.repository.ColunasSql.textos;
 public class PresenteRepositoryJdbc implements PresenteRepository {
 
     private static final String COLUNAS = """
-            SELECT id, nome, categoria, descricao, preco, caracteristicas, ocasioes, link_compra, imagem_url
+            SELECT id, usuario_id, nome, categoria, descricao, preco, caracteristicas, ocasioes, link_compra, imagem_url
             FROM presente""";
 
     private static final RowMapper<Presente> MAPEADOR = (rs, linha) -> {
@@ -31,7 +31,7 @@ public class PresenteRepositoryJdbc implements PresenteRepository {
                 lerTextos(rs, "caracteristicas"),
                 lerEnums(rs, "ocasioes", Ocasiao.class),
                 rs.getString("link_compra"));
-        Presente presente = new Presente(dados);
+        Presente presente = new Presente(rs.getInt("usuario_id"), dados);
         presente.setId(rs.getInt("id"));
         presente.definirImagem(rs.getString("imagem_url"));
         return presente;
@@ -46,13 +46,13 @@ public class PresenteRepositoryJdbc implements PresenteRepository {
     @Override
     public Presente salvar(Presente presente) {
         presente.setId(jdbc.sql("""
-                        INSERT INTO presente (nome, categoria, descricao, preco, caracteristicas, ocasioes, link_compra,
-                                              imagem_url)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                        INSERT INTO presente (usuario_id, nome, categoria, descricao, preco, caracteristicas, ocasioes,
+                                              link_compra, imagem_url)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                         RETURNING id""")
-                .params(presente.getNome(), presente.getCategoria().name(), presente.getDescricao(), presente.getPreco(),
-                        textos(presente.getCaracteristicas()), nomes(presente.getOcasioes()), presente.getLinkCompra(),
-                        presente.getImagemUrl())
+                .params(presente.getUsuarioId(), presente.getNome(), presente.getCategoria().name(),
+                        presente.getDescricao(), presente.getPreco(), textos(presente.getCaracteristicas()),
+                        nomes(presente.getOcasioes()), presente.getLinkCompra(), presente.getImagemUrl())
                 .query(Integer.class)
                 .single());
         return presente;
@@ -79,6 +79,11 @@ public class PresenteRepositoryJdbc implements PresenteRepository {
     @Override
     public List<Presente> listarTodos() {
         return jdbc.sql(COLUNAS + " ORDER BY id").query(MAPEADOR).list();
+    }
+
+    @Override
+    public List<Presente> listarPorUsuario(int usuarioId) {
+        return jdbc.sql(COLUNAS + " WHERE usuario_id = ? ORDER BY id").param(usuarioId).query(MAPEADOR).list();
     }
 
     @Override

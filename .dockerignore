@@ -1,0 +1,9 @@
+# Arquivos que não entram na imagem: compilações, configurações locais e segredos.
+target/
+.git/
+.idea/
+.vscode/
+*.iml
+docs/
+chave-ia.properties
+banco.properties

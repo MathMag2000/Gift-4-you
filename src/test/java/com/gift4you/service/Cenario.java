@@ -19,6 +19,7 @@ import com.gift4you.repository.PresenteRepositoryEmMemoria;
 
 import java.math.BigDecimal;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -60,8 +61,10 @@ class Cenario {
     };
     final FavoritoService favoritos = new FavoritoService(new FavoritoRepositoryEmMemoria(), new FavoritoValidador(),
             pessoas, presentes, loja, relogio);
+    /** Limite alto: os testes de limite usam o próprio. */
+    final LimiteDeTaxa limiteIa = new LimiteDeTaxa(1000, Duration.ofHours(1), relogio);
     final SugestaoService sugestoes = new SugestaoService(pessoas, presentes, new ComparadorTermos(),
-            (pessoa, quantidade) -> ideiasDaIa, historico, loja);
+            (pessoa, quantidade) -> ideiasDaIa, historico, loja, limiteIa);
 
     Cenario() {
         pessoas.adicionarOuvinteRemocao(historico);
@@ -78,7 +81,7 @@ class Cenario {
     }
 
     Presente cadastrarPresente(String nome, Categoria categoria, String preco, List<String> caracteristicas) {
-        return presentes.cadastrar(new DadosPresente(nome, categoria, "", new BigDecimal(preco), caracteristicas,
+        return presentes.cadastrar(USUARIO, new DadosPresente(nome, categoria, "", new BigDecimal(preco), caracteristicas,
                 List.of(Ocasiao.ANIVERSARIO), linkDe(nome)));
     }
 

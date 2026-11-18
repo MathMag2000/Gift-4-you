@@ -28,9 +28,10 @@ CREATE INDEX IF NOT EXISTS idx_pessoa_usuario ON pessoa (usuario_id);
 ALTER TABLE pessoa ADD COLUMN IF NOT EXISTS estilos     TEXT[] NOT NULL DEFAULT '{}';
 ALTER TABLE pessoa ADD COLUMN IF NOT EXISTS observacoes TEXT   NOT NULL DEFAULT '';
 
--- Catálogo de presentes, compartilhado por todos os usuários.
+-- Catálogo de presentes: cada conta tem o próprio.
 CREATE TABLE IF NOT EXISTS presente (
     id              SERIAL PRIMARY KEY,
+    usuario_id      INTEGER        NOT NULL REFERENCES usuario (id) ON DELETE CASCADE,
     nome            TEXT           NOT NULL,
     categoria       VARCHAR(30)    NOT NULL,
     descricao       TEXT           NOT NULL DEFAULT '',
@@ -40,6 +41,15 @@ CREATE TABLE IF NOT EXISTS presente (
     link_compra     VARCHAR(2000)  NOT NULL,
     imagem_url      TEXT
 );
+
+-- Bancos criados quando o catálogo era compartilhado: os presentes existentes passam a ser da primeira
+-- conta cadastrada. Sem nenhuma conta, não há dono possível e esses presentes são removidos.
+ALTER TABLE presente ADD COLUMN IF NOT EXISTS usuario_id INTEGER REFERENCES usuario (id) ON DELETE CASCADE;
+UPDATE presente SET usuario_id = (SELECT MIN(id) FROM usuario) WHERE usuario_id IS NULL;
+DELETE FROM presente WHERE usuario_id IS NULL;
+ALTER TABLE presente ALTER COLUMN usuario_id SET NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_presente_usuario ON presente (usuario_id);
 
 -- Favoritos e histórico guardam uma cópia do item sugerido (ver ItemSugerido). Por isso presente_id
 -- não é chave estrangeira: o favorito continua existindo se o presente sair do catálogo.

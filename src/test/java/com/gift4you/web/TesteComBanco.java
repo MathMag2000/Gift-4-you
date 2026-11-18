@@ -25,7 +25,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Base dos testes de API: sobe um PostgreSQL de verdade (embutido, sem instalação) uma vez para todos os
  * testes, e esvazia as tabelas antes de cada um, para que os ids comecem sempre em 1.
  */
-@SpringBootTest(properties = {"gemini.chave-api=", "gift4you.senha.iteracoes=1000"})
+@SpringBootTest(properties = {"gemini.chave-api=", "gift4you.senha.iteracoes=1000",
+        // Os testes criam muitas contas e erram senhas de propósito, todos a partir do mesmo endereço.
+        "gift4you.limite.cadastros-por-ip-hora=10000", "gift4you.limite.login-falhas-por-ip=10000",
+        "gift4you.limite.login-falhas-por-email=10000"})
 @AutoConfigureMockMvc
 abstract class TesteComBanco {
 

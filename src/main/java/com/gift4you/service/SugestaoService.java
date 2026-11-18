@@ -1,5 +1,6 @@
 package com.gift4you.service;
 
+import com.gift4you.exception.LimiteExcedidoException;
 import com.gift4you.model.FaixaOrcamento;
 import com.gift4you.model.IdeiaPresente;
 import com.gift4you.model.ItemSugerido;
@@ -35,22 +36,25 @@ public class SugestaoService {
     private final GeradorIdeias geradorIdeias;
     private final HistoricoService historicoService;
     private final LojaOnline loja;
+    /** Pedidos de ideias à IA por conta, pois cada pedido usa a cota (e pode ter custo) da chave do Gemini. */
+    private final LimiteDeTaxa limiteIa;
 
     public SugestaoService(PessoaService pessoaService, PresenteService presenteService,
                            ComparadorTermos comparador, GeradorIdeias geradorIdeias,
-                           HistoricoService historicoService, LojaOnline loja) {
+                           HistoricoService historicoService, LojaOnline loja, LimiteDeTaxa limiteIa) {
         this.pessoaService = pessoaService;
         this.presenteService = presenteService;
         this.comparador = comparador;
         this.geradorIdeias = geradorIdeias;
         this.historicoService = historicoService;
         this.loja = loja;
+        this.limiteIa = limiteIa;
     }
 
     /** Gera as sugestões do catálogo e as registra no histórico. */
     public List<SugestaoPresente> gerarSugestoes(int usuarioId, int pessoaId) {
         Pessoa pessoa = pessoaService.buscarPorId(usuarioId, pessoaId);
-        List<SugestaoPresente> sugestoes = presenteService.listar().stream()
+        List<SugestaoPresente> sugestoes = presenteService.listar(usuarioId).stream()
                 .filter(presente -> dentroDoOrcamento(presente.getPreco(), pessoa.getOrcamento()))
                 .filter(presente -> !rejeitado(pessoa, textosDoPresente(presente)))
                 .map(presente -> avaliar(pessoa, presente))
@@ -68,9 +72,17 @@ public class SugestaoService {
      * Pede ideias à IA e aplica as mesmas regras de orçamento e rejeição do catálogo,
      * pois o modelo nem sempre respeita as restrições pedidas. Cada ideia aprovada é procurada na loja
      * para ganhar o link da página do produto, e o resultado vai para o histórico.
+     * Cada conta pode fazer um número limitado de pedidos por hora; pedidos que falham também contam,
+     * pois chegam à IA do mesmo jeito.
      */
     public ResultadoIdeias gerarIdeiasComIa(int usuarioId, int pessoaId) {
         Pessoa pessoa = pessoaService.buscarPorId(usuarioId, pessoaId);
+        String chave = "ia:" + usuarioId;
+        if (!limiteIa.tentarRegistrar(chave)) {
+            throw new LimiteExcedidoException("Você atingiu o limite de " + limiteIa.getMaximo()
+                    + " pedidos de ideias com IA por hora. Tente novamente em "
+                    + LimiteDeTaxa.emMinutos(limiteIa.tempoParaLiberar(chave)) + ".", limiteIa.tempoParaLiberar(chave));
+        }
         List<IdeiaPresente> recebidas = geradorIdeias.gerarIdeias(pessoa, QUANTIDADE_IDEIAS_IA);
         List<IdeiaPresente> aprovadas = recebidas.stream()
                 .filter(ideia -> dentroDoOrcamento(ideia.precoEstimado(), pessoa.getOrcamento()))

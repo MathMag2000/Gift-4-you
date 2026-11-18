@@ -1,5 +1,6 @@
 package com.gift4you;
 
+import com.gift4you.config.VerificacaoProducao;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -7,6 +8,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class Gift4YouApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(Gift4YouApplication.class, args);
+        SpringApplication aplicacao = new SpringApplication(Gift4YouApplication.class);
+        aplicacao.addListeners(new VerificacaoProducao());
+        aplicacao.run(args);
     }
 }

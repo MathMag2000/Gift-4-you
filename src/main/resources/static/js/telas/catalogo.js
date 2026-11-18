@@ -42,7 +42,7 @@ export async function telaCatalogo(principal) {
 
     principal.innerHTML = `
         ${cabecalhoPagina("Catálogo de presentes",
-            "Presentes usados nas sugestões do catálogo, compartilhados entre todas as contas.",
+            "Seus presentes cadastrados. Eles são usados nas sugestões do catálogo e só você os vê.",
             `<a class="botao" href="#/catalogo/novo">+ Cadastrar presente</a>`)}
         ${lista}`;
 

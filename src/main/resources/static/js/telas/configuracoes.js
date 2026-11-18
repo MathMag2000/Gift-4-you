@@ -13,8 +13,7 @@ export async function telaConfiguracoes(principal) {
             <div class="detalhe"><dt>E-mail</dt><dd>${escaparHtml(conta?.email)}</dd></div>
         </dl>
         <div class="dica">
-            <p>As pessoas, os favoritos e o histórico são visíveis somente para a sua conta. O catálogo de presentes
-               é compartilhado entre todas as contas.</p>
+            <p>As pessoas, o catálogo de presentes, os favoritos e o histórico são visíveis somente para a sua conta.</p>
         </div>
         <div class="acoes">
             <button type="button" class="botao botao--contorno-forte" data-acao="sair">${icones.sair()} Sair da conta</button>

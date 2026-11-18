@@ -65,6 +65,8 @@
 * [x] Criar páginas de cadastro de pessoas e presentes
 * [x] Criar página de sugestões (catálogo e IA)
 * [x] Persistir os dados em banco de dados (PostgreSQL)
+* [x] Refazer o site no visual do wireframe do Figma
+* [x] Preparar a publicação (Dockerfile, perfil de produção, catálogo por conta, limites e cabeçalhos de segurança)
 * [ ] Publicar o site
 
 ## Favoritos

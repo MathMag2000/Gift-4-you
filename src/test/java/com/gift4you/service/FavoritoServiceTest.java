@@ -166,7 +166,7 @@ class FavoritoServiceTest {
     void favoritoContinuaExistindoSeOPresenteMudarNoCatalogo() {
         favoritarDoCatalogo(ana.getId(), kitCafe.getId());
 
-        cenario.presentes.remover(kitCafe.getId());
+        cenario.presentes.remover(Cenario.USUARIO, kitCafe.getId());
 
         assertThat(cenario.favoritos.listar(Cenario.USUARIO, ana.getId())).singleElement()
                 .satisfies(favorito -> assertThat(favorito.getItem().nome()).isEqualTo("Kit de café"));

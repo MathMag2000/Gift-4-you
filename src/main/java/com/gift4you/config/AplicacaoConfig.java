@@ -19,6 +19,8 @@ import com.gift4you.service.FavoritoValidador;
 import com.gift4you.service.GeradorIdeias;
 import com.gift4you.service.GeradorIdeiasIndisponivel;
 import com.gift4you.service.HistoricoService;
+import com.gift4you.service.LimiteDeTaxa;
+import com.gift4you.service.LimitesConta;
 import com.gift4you.service.LojaOnline;
 import com.gift4you.service.PessoaService;
 import com.gift4you.service.PessoaValidador;
@@ -34,6 +36,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Clock;
+import java.time.Duration;
 
 /**
  * Monta as classes de negócio. Elas não dependem do Spring, que só fica responsável por ligá-las.
@@ -42,12 +45,27 @@ import java.time.Clock;
 @Configuration
 public class AplicacaoConfig {
 
+    /**
+     * Limites contra abuso (ver README). Os valores padrão servem para o site publicado; os testes os
+     * aumentam, pois criam muitas contas a partir do mesmo endereço.
+     */
     @Bean
-    public UsuarioService usuarioService(JdbcClient jdbc,
+    public LimitesConta limitesConta(Clock relogio,
+                                     @Value("${gift4you.limite.login-falhas-por-email:5}") int falhasPorEmail,
+                                     @Value("${gift4you.limite.login-falhas-por-ip:20}") int falhasPorIp,
+                                     @Value("${gift4you.limite.cadastros-por-ip-hora:10}") int cadastrosPorIp) {
+        Duration quinzeMinutos = Duration.ofMinutes(15);
+        return new LimitesConta(new LimiteDeTaxa(falhasPorEmail, quinzeMinutos, relogio),
+                new LimiteDeTaxa(falhasPorIp, quinzeMinutos, relogio),
+                new LimiteDeTaxa(cadastrosPorIp, Duration.ofHours(1), relogio));
+    }
+
+    @Bean
+    public UsuarioService usuarioService(JdbcClient jdbc, LimitesConta limitesConta,
                                          @Value("${gift4you.senha.iteracoes:" + CodificadorSenhaPbkdf2.ITERACOES_PADRAO + "}")
                                          int iteracoesSenha) {
         return new UsuarioService(new UsuarioRepositoryJdbc(jdbc), new UsuarioValidador(),
-                new CodificadorSenhaPbkdf2(iteracoesSenha));
+                new CodificadorSenhaPbkdf2(iteracoesSenha), limitesConta);
     }
 
     @Bean
@@ -107,8 +125,9 @@ public class AplicacaoConfig {
     @Bean
     public SugestaoService sugestaoService(PessoaService pessoaService, PresenteService presenteService,
                                            GeradorIdeias geradorIdeias, HistoricoService historicoService,
-                                           LojaOnline lojaOnline) {
+                                           LojaOnline lojaOnline, Clock relogio,
+                                           @Value("${gift4you.limite.ia-por-hora:10}") int pedidosIaPorHora) {
         return new SugestaoService(pessoaService, presenteService, new ComparadorTermos(), geradorIdeias,
-                historicoService, lojaOnline);
+                historicoService, lojaOnline, new LimiteDeTaxa(pedidosIaPorHora, Duration.ofHours(1), relogio));
     }
 }

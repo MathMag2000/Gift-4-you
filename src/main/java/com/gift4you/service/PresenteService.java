@@ -7,6 +7,10 @@ import com.gift4you.repository.PresenteRepository;
 
 import java.util.List;
 
+/**
+ * Catálogo de presentes. Cada conta tem o próprio catálogo: presentes de outras contas são tratados como
+ * inexistentes, para que ninguém veja, altere ou apague o catálogo dos outros.
+ */
 public class PresenteService {
 
     private final PresenteRepository repository;
@@ -21,26 +25,27 @@ public class PresenteService {
     }
 
     /** Cadastra o presente buscando a imagem na página do link de compra. */
-    public Presente cadastrar(DadosPresente dados) {
-        Presente presente = new Presente(validador.validar(dados));
+    public Presente cadastrar(int usuarioId, DadosPresente dados) {
+        Presente presente = new Presente(usuarioId, validador.validar(dados));
         presente.definirImagem(extratorImagem.extrair(presente.getLinkCompra()).orElse(null));
         return repository.salvar(presente);
     }
 
-    public List<Presente> listar() {
-        return repository.listarTodos();
+    public List<Presente> listar(int usuarioId) {
+        return repository.listarPorUsuario(usuarioId);
     }
 
-    public Presente buscarPorId(int id) {
+    public Presente buscarPorId(int usuarioId, int id) {
         return repository.buscarPorId(id)
+                .filter(presente -> presente.pertenceA(usuarioId))
                 .orElseThrow(() -> new PresenteNaoEncontradoException(id));
     }
 
     /**
      * Busca a imagem de novo quando o link muda ou quando a tentativa anterior não encontrou imagem.
      */
-    public Presente alterar(int id, DadosPresente dados) {
-        Presente presente = buscarPorId(id);
+    public Presente alterar(int usuarioId, int id, DadosPresente dados) {
+        Presente presente = buscarPorId(usuarioId, id);
         DadosPresente validados = validador.validar(dados);
         boolean buscarImagem = presente.getImagemUrl() == null
                 || !presente.getLinkCompra().equals(validados.linkCompra());
@@ -51,7 +56,8 @@ public class PresenteService {
         return repository.atualizar(presente);
     }
 
-    public void remover(int id) {
+    public void remover(int usuarioId, int id) {
+        buscarPorId(usuarioId, id);
         if (!repository.remover(id)) {
             throw new PresenteNaoEncontradoException(id);
         }
