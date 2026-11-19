@@ -1,6 +1,7 @@
 package com.gift4you.web;
 
 import com.gift4you.model.Categoria;
+import com.gift4you.model.EstilosPredefinidos;
 import com.gift4you.model.GostosPredefinidos;
 import com.gift4you.model.Ocasiao;
 import com.gift4you.model.OrigemSugestao;
@@ -21,14 +22,18 @@ public class OpcoesController {
     }
 
     public record Opcoes(List<Opcao> vinculos, List<Opcao> ocasioes, List<Opcao> categorias, List<Opcao> origens,
-                         List<Opcao> gostos) {
+                         List<Opcao> gostos, List<Opcao> estilos) {
     }
 
     @GetMapping("/api/opcoes")
     public Opcoes listar() {
         return new Opcoes(paraOpcoes(Vinculo.values()), paraOpcoes(Ocasiao.values()), paraOpcoes(Categoria.values()),
-                paraOpcoes(OrigemSugestao.values()),
-                GostosPredefinidos.TAGS.stream().map(gosto -> new Opcao(gosto, gosto)).toList());
+                paraOpcoes(OrigemSugestao.values()), paraOpcoes(GostosPredefinidos.TAGS),
+                paraOpcoes(EstilosPredefinidos.TAGS));
+    }
+
+    private List<Opcao> paraOpcoes(List<String> tags) {
+        return tags.stream().map(tag -> new Opcao(tag, tag)).toList();
     }
 
     private List<Opcao> paraOpcoes(Enum<?>[] valores) {

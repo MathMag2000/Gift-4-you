@@ -35,7 +35,7 @@ class SugestaoServiceIaTest {
         cenario.ideiasDaIa.add(Cenario.ideia("Prensa francesa", "120"));
         cenario.produtosNaLoja.put("Prensa francesa", List.of(PRENSA_NA_LOJA));
 
-        IdeiaPresente ideia = cenario.sugestoes.gerarIdeiasComIa(ana.getId()).ideias().getFirst();
+        IdeiaPresente ideia = cenario.sugestoes.gerarIdeiasComIa(Cenario.USUARIO, ana.getId()).ideias().getFirst();
 
         assertThat(ideia.nome()).isEqualTo("Prensa Francesa Mimo 600ml");
         assertThat(ideia.precoEstimado()).isEqualByComparingTo("89.90");
@@ -48,7 +48,7 @@ class SugestaoServiceIaTest {
     void ideiaNaoEncontradaFicaComOLinkDeBuscaEOPrecoEstimado() {
         cenario.ideiasDaIa.add(Cenario.ideia("Prensa francesa", "120"));
 
-        IdeiaPresente ideia = cenario.sugestoes.gerarIdeiasComIa(ana.getId()).ideias().getFirst();
+        IdeiaPresente ideia = cenario.sugestoes.gerarIdeiasComIa(Cenario.USUARIO, ana.getId()).ideias().getFirst();
 
         assertThat(ideia.nome()).isEqualTo("Prensa francesa");
         assertThat(ideia.precoEstimado()).isEqualByComparingTo("120");
@@ -64,7 +64,7 @@ class SugestaoServiceIaTest {
                 produto("Cafeteira sem preço", "B000000002", null),
                 produto("Cafeteira Italiana", "B000000003", "149.90")));
 
-        IdeiaPresente ideia = cenario.sugestoes.gerarIdeiasComIa(ana.getId()).ideias().getFirst();
+        IdeiaPresente ideia = cenario.sugestoes.gerarIdeiasComIa(Cenario.USUARIO, ana.getId()).ideias().getFirst();
 
         assertThat(ideia.nome()).isEqualTo("Cafeteira Italiana");
         assertThat(ideia.precoEstimado()).isEqualByComparingTo("149.90");
@@ -75,7 +75,7 @@ class SugestaoServiceIaTest {
         cenario.ideiasDaIa.add(Cenario.ideia("Kit presente", "120"));
         cenario.produtosNaLoja.put("Kit presente", List.of(produto("Kit Perfume e Hidratante", "B000000001", "99")));
 
-        IdeiaPresente ideia = cenario.sugestoes.gerarIdeiasComIa(ana.getId()).ideias().getFirst();
+        IdeiaPresente ideia = cenario.sugestoes.gerarIdeiasComIa(Cenario.USUARIO, ana.getId()).ideias().getFirst();
 
         assertThat(ideia.nome()).isEqualTo("Kit presente");
         assertThat(ideia.linkCompra()).isEqualTo("https://www.amazon.com.br/s?k=Kit+presente");
@@ -89,7 +89,7 @@ class SugestaoServiceIaTest {
         cenario.produtosNaLoja.put("Prensa francesa", List.of(PRENSA_NA_LOJA));
         cenario.produtosNaLoja.put("Moedor de café", List.of(produto("Moedor Manual", "B000000002", "75")));
 
-        List<IdeiaPresente> ideias = cenario.sugestoes.gerarIdeiasComIa(ana.getId()).ideias();
+        List<IdeiaPresente> ideias = cenario.sugestoes.gerarIdeiasComIa(Cenario.USUARIO, ana.getId()).ideias();
 
         assertThat(ideias).extracting(IdeiaPresente::nome)
                 .containsExactly("Prensa Francesa Mimo 600ml", "Caneca", "Moedor Manual");
@@ -104,9 +104,9 @@ class SugestaoServiceIaTest {
         cenario.ideiasDaIa.add(Cenario.ideia("Prensa francesa", "120"));
         cenario.produtosNaLoja.put("Prensa francesa", List.of(PRENSA_NA_LOJA));
 
-        cenario.sugestoes.gerarIdeiasComIa(ana.getId());
+        cenario.sugestoes.gerarIdeiasComIa(Cenario.USUARIO, ana.getId());
 
-        RegistroHistorico registro = cenario.historico.listar(ana.getId()).getFirst();
+        RegistroHistorico registro = cenario.historico.listar(Cenario.USUARIO, ana.getId()).getFirst();
         assertThat(registro.getItens().getFirst()).satisfies(item -> {
             assertThat(item.nome()).isEqualTo("Prensa Francesa Mimo 600ml");
             assertThat(item.preco()).isEqualByComparingTo("89.90");

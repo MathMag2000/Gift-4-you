@@ -1,0 +1,5 @@
+# Copie este arquivo com o nome banco.properties (ignorado pelo Git) e ajuste os dados do seu PostgreSQL.
+# Só é necessário se o seu banco não usar os padrões (localhost:5432, banco gift4you, usuário e senha postgres).
+spring.datasource.url=jdbc:postgresql://localhost:5432/gift4you
+spring.datasource.username=postgres
+spring.datasource.password=COLE_SUA_SENHA_AQUI

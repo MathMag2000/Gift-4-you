@@ -35,9 +35,9 @@ class HistoricoServiceTest {
 
     @Test
     void gerarSugestoesDoCatalogoRegistraNoHistorico() {
-        cenario.sugestoes.gerarSugestoes(ana.getId());
+        cenario.sugestoes.gerarSugestoes(Cenario.USUARIO, ana.getId());
 
-        RegistroHistorico registro = cenario.historico.listar(ana.getId()).getFirst();
+        RegistroHistorico registro = cenario.historico.listar(Cenario.USUARIO, ana.getId()).getFirst();
         assertThat(registro.getOrigem()).isEqualTo(OrigemSugestao.CATALOGO);
         assertThat(registro.getOcasiao()).isEqualTo(Ocasiao.ANIVERSARIO);
         assertThat(registro.getOrcamento().maximo()).isEqualByComparingTo("200");
@@ -57,9 +57,9 @@ class HistoricoServiceTest {
                 Cenario.ideia("Perfume importado", "150"),
                 Cenario.ideia("Viagem", "900")));
 
-        cenario.sugestoes.gerarIdeiasComIa(ana.getId());
+        cenario.sugestoes.gerarIdeiasComIa(Cenario.USUARIO, ana.getId());
 
-        RegistroHistorico registro = cenario.historico.listar(ana.getId()).getFirst();
+        RegistroHistorico registro = cenario.historico.listar(Cenario.USUARIO, ana.getId()).getFirst();
         assertThat(registro.getOrigem()).isEqualTo(OrigemSugestao.IA);
         assertThat(registro.getItens()).extracting(ItemSugerido::nome).containsExactly("Prensa francesa");
         assertThat(registro.getItens().getFirst().presenteId()).isNull();
@@ -70,24 +70,24 @@ class HistoricoServiceTest {
 
     @Test
     void registraMesmoQuandoNenhumaSugestaoEEncontrada() {
-        Pessoa semAfinidade = cenario.pessoas.cadastrar(new DadosPessoa("Caio", 20, Vinculo.IRMAO, List.of(),
+        Pessoa semAfinidade = cenario.pessoas.cadastrar(Cenario.USUARIO, new DadosPessoa("Caio", 20, Vinculo.IRMAO, List.of(),
                 List.of(), Ocasiao.FORMATURA,
                 new FaixaOrcamento(new BigDecimal("2000"))));
 
-        cenario.sugestoes.gerarSugestoes(semAfinidade.getId());
+        cenario.sugestoes.gerarSugestoes(Cenario.USUARIO, semAfinidade.getId());
 
-        assertThat(cenario.historico.listar(semAfinidade.getId())).singleElement()
+        assertThat(cenario.historico.listar(Cenario.USUARIO, semAfinidade.getId())).singleElement()
                 .satisfies(registro -> assertThat(registro.getItens()).isEmpty());
     }
 
     @Test
     void guardaOPerfilDoMomentoMesmoQueAPessoaMudeDepois() {
-        cenario.sugestoes.gerarSugestoes(ana.getId());
+        cenario.sugestoes.gerarSugestoes(Cenario.USUARIO, ana.getId());
 
-        cenario.pessoas.alterar(ana.getId(), new DadosPessoa("Ana", 30, Vinculo.AMIGO, List.of("café"),
+        cenario.pessoas.alterar(Cenario.USUARIO, ana.getId(), new DadosPessoa("Ana", 30, Vinculo.AMIGO, List.of("café"),
                 List.of(), Ocasiao.NATAL, new FaixaOrcamento(new BigDecimal("20"))));
 
-        RegistroHistorico registro = cenario.historico.listar(ana.getId()).getFirst();
+        RegistroHistorico registro = cenario.historico.listar(Cenario.USUARIO, ana.getId()).getFirst();
         assertThat(registro.getOcasiao()).isEqualTo(Ocasiao.ANIVERSARIO);
         assertThat(registro.getOrcamento().maximo()).isEqualByComparingTo("200");
     }
@@ -95,34 +95,34 @@ class HistoricoServiceTest {
     @Test
     void filtraPorPessoaEListaOsMaisRecentesPrimeiro() {
         Pessoa bruno = cenario.cadastrarPessoa("Bruno", List.of(), List.of());
-        cenario.sugestoes.gerarSugestoes(ana.getId());
-        cenario.sugestoes.gerarSugestoes(bruno.getId());
-        cenario.sugestoes.gerarIdeiasComIa(ana.getId());
+        cenario.sugestoes.gerarSugestoes(Cenario.USUARIO, ana.getId());
+        cenario.sugestoes.gerarSugestoes(Cenario.USUARIO, bruno.getId());
+        cenario.sugestoes.gerarIdeiasComIa(Cenario.USUARIO, ana.getId());
 
-        assertThat(cenario.historico.listar(ana.getId())).extracting(RegistroHistorico::getOrigem)
+        assertThat(cenario.historico.listar(Cenario.USUARIO, ana.getId())).extracting(RegistroHistorico::getOrigem)
                 .containsExactly(OrigemSugestao.IA, OrigemSugestao.CATALOGO);
-        assertThat(cenario.historico.listar(null)).hasSize(3);
+        assertThat(cenario.historico.listar(Cenario.USUARIO, null)).hasSize(3);
     }
 
     @Test
     void buscaRegistroPorId() {
-        cenario.sugestoes.gerarSugestoes(ana.getId());
-        int id = cenario.historico.listar(ana.getId()).getFirst().getId();
+        cenario.sugestoes.gerarSugestoes(Cenario.USUARIO, ana.getId());
+        int id = cenario.historico.listar(Cenario.USUARIO, ana.getId()).getFirst().getId();
 
-        assertThat(cenario.historico.buscarPorId(id).getPessoaId()).isEqualTo(ana.getId());
-        assertThatThrownBy(() -> cenario.historico.buscarPorId(999))
+        assertThat(cenario.historico.buscarPorId(Cenario.USUARIO, id).getPessoaId()).isEqualTo(ana.getId());
+        assertThatThrownBy(() -> cenario.historico.buscarPorId(Cenario.USUARIO, 999))
                 .isInstanceOf(RegistroHistoricoNaoEncontradoException.class);
     }
 
     @Test
     void removerPessoaApagaOHistoricoDela() {
         Pessoa bruno = cenario.cadastrarPessoa("Bruno", List.of(), List.of());
-        cenario.sugestoes.gerarSugestoes(ana.getId());
-        cenario.sugestoes.gerarSugestoes(bruno.getId());
+        cenario.sugestoes.gerarSugestoes(Cenario.USUARIO, ana.getId());
+        cenario.sugestoes.gerarSugestoes(Cenario.USUARIO, bruno.getId());
 
-        cenario.pessoas.remover(ana.getId());
+        cenario.pessoas.remover(Cenario.USUARIO, ana.getId());
 
-        assertThat(cenario.historico.listar(null)).extracting(RegistroHistorico::getPessoaId)
+        assertThat(cenario.historico.listar(Cenario.USUARIO, null)).extracting(RegistroHistorico::getPessoaId)
                 .containsExactly(bruno.getId());
     }
 }

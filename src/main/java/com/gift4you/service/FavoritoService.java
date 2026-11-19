@@ -36,13 +36,14 @@ public class FavoritoService implements OuvinteRemocaoPessoa {
     }
 
     /**
-     * Favorita o item para a pessoa. Se já estiver nos favoritos, devolve o favorito existente.
+     * Favorita o item para a pessoa, que deve ser do usuário. Se já estiver nos favoritos, devolve o
+     * favorito existente.
      */
-    public synchronized Favorito favoritar(DadosFavorito dados) {
+    public synchronized Favorito favoritar(int usuarioId, DadosFavorito dados) {
         validador.validarPedido(dados);
-        int pessoaId = pessoaService.buscarPorId(dados.pessoaId()).getId();
+        int pessoaId = pessoaService.buscarPorId(usuarioId, dados.pessoaId()).getId();
         ItemSugerido item = dados.origem() == OrigemSugestao.CATALOGO
-                ? itemDoCatalogo(dados.item())
+                ? itemDoCatalogo(usuarioId, dados.item())
                 : ideiaComLinkDaLoja(validador.validarIdeia(dados.item()), dados.item());
 
         return repository.listarPorPessoa(pessoaId).stream()
@@ -53,17 +54,27 @@ public class FavoritoService implements OuvinteRemocaoPessoa {
     }
 
     /**
-     * @param pessoaId filtra pela pessoa; se nulo, lista os favoritos de todas
+     * @param pessoaId filtra pela pessoa; se nulo, lista os favoritos de todas as pessoas do usuário.
+     *                 Uma pessoa de outro usuário resulta numa lista vazia.
      */
-    public List<Favorito> listar(Integer pessoaId) {
-        List<Favorito> favoritos = pessoaId == null
-                ? repository.listarTodos()
-                : repository.listarPorPessoa(pessoaId);
+    public List<Favorito> listar(int usuarioId, Integer pessoaId) {
+        List<Favorito> favoritos;
+        if (pessoaId == null) {
+            favoritos = repository.listarPorPessoas(pessoaService.idsDasPessoas(usuarioId));
+        } else if (pessoaService.pertenceAoUsuario(usuarioId, pessoaId)) {
+            favoritos = repository.listarPorPessoa(pessoaId);
+        } else {
+            favoritos = List.of();
+        }
         return favoritos.stream().sorted(MAIS_RECENTES_PRIMEIRO).toList();
     }
 
-    public void remover(int id) {
-        if (!repository.remover(id)) {
+    /** Favoritos de pessoas de outro usuário são tratados como inexistentes. */
+    public void remover(int usuarioId, int id) {
+        boolean doUsuario = repository.buscarPorId(id)
+                .filter(favorito -> pessoaService.pertenceAoUsuario(usuarioId, favorito.getPessoaId()))
+                .isPresent();
+        if (!doUsuario || !repository.remover(id)) {
             throw new FavoritoNaoEncontradoException(id);
         }
     }
@@ -84,8 +95,8 @@ public class FavoritoService implements OuvinteRemocaoPessoa {
     }
 
     /** Usa os dados atuais do catálogo, e não os enviados, mantendo só os motivos da sugestão. */
-    private ItemSugerido itemDoCatalogo(ItemSugerido enviado) {
-        Presente presente = presenteService.buscarPorId(validador.exigirPresenteId(enviado));
+    private ItemSugerido itemDoCatalogo(int usuarioId, ItemSugerido enviado) {
+        Presente presente = presenteService.buscarPorId(usuarioId, validador.exigirPresenteId(enviado));
         return ItemSugerido.de(presente, enviado.motivos() == null ? List.of() : enviado.motivos());
     }
 }

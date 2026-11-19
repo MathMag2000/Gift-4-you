@@ -19,7 +19,7 @@ public class PresenteValidador extends ValidadorBase {
      * (textos sem espaços nas pontas, características em minúsculas e ocasiões sem repetição).
      */
     public DadosPresente validar(DadosPresente dados) {
-        String nome = exigirTexto(dados.nome(), "O nome do presente é obrigatório.");
+        String nome = validarNomeProduto(dados.nome(), "O nome do presente é obrigatório.");
         exigir(dados.categoria(), "A categoria é obrigatória.");
         validarPreco(dados.preco());
         List<Ocasiao> ocasioes = validarOcasioes(dados.ocasioes());

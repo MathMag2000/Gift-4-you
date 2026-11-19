@@ -1,55 +1,159 @@
-import { atualizarFavoritos, iniciarFavoritos } from "./favoritos.js";
-import { atualizarHistorico, iniciarHistorico } from "./historico.js";
-import { carregarOpcoes, preencherSelects } from "./opcoes.js";
-import { iniciarPessoas } from "./pessoas.js";
-import { iniciarPresentes } from "./presentes.js";
-import { atualizarPessoas, iniciarSugestoes } from "./sugestoes.js";
-import { mostrarErro } from "./util.js";
+// Ponto de entrada do site: confere a sessão, monta o menu lateral e troca de tela conforme o endereço (#/...).
+import { api, EVENTO_SESSAO_EXPIRADA } from "./api.js";
+import { mostrarDeslogado, sair } from "./conta.js";
+import { icones, logotipo } from "./componentes/icones.js";
+import { carregarOpcoes } from "./opcoes.js";
+import { telaCatalogo, telaFormularioPresente } from "./telas/catalogo.js";
+import { telaComoFunciona } from "./telas/como-funciona.js";
+import { telaConfiguracoes } from "./telas/configuracoes.js";
+import { telaFavoritos } from "./telas/favoritos.js";
+import { telaHistorico } from "./telas/historico.js";
+import { telaInicio } from "./telas/inicio.js";
+import { telaFormularioPessoa } from "./telas/pessoa-formulario.js";
+import { telaSugestoesPessoa } from "./telas/pessoa-sugestoes.js";
+import { telaDetalhesPessoa, telaPessoas } from "./telas/pessoas.js";
+import { escaparHtml, marcadorErroImagem, mostrarErro } from "./util.js";
 
-const abas = document.querySelectorAll(".aba");
+/** Itens do menu: os do wireframe (Início, Favoritos, Históricos, Configurações, Pessoas) e o Catálogo. */
+const MENU = [
+    { secao: "inicio", rotulo: "Início", icone: icones.inicio },
+    { secao: "favoritos", rotulo: "Favoritos", icone: icones.coracao },
+    { secao: "historico", rotulo: "Históricos", icone: icones.relogio },
+    { secao: "configuracoes", rotulo: "Configurações", icone: icones.configuracoes },
+    { secao: "pessoas", rotulo: "Pessoas", icone: icones.pessoa },
+    { secao: "catalogo", rotulo: "Catálogo", icone: icones.presente },
+];
 
-/** Seções que recarregam os dados ao serem abertas, pois dependem do que mudou em outras abas. */
-const aoAbrir = {
-    sugestoes: atualizarPessoas,
-    favoritos: atualizarFavoritos,
-    historico: atualizarHistorico,
-};
+/** Rotas: padrão do endereço, seção destacada no menu e a tela. */
+const ROTAS = [
+    { padrao: /^\/inicio$/, secao: "inicio", tela: telaInicio, titulo: "Início" },
+    { padrao: /^\/como-funciona$/, secao: "inicio", tela: telaComoFunciona, titulo: "Como funciona" },
+    { padrao: /^\/sugestoes\/nova$/, secao: "inicio", titulo: "Quero sugestões",
+        tela: (principal) => telaFormularioPessoa(principal, { modo: "sugestoes" }) },
+    { padrao: /^\/pessoas$/, secao: "pessoas", tela: telaPessoas, titulo: "Pessoas" },
+    { padrao: /^\/pessoas\/nova$/, secao: "pessoas", titulo: "Cadastrar pessoa",
+        tela: (principal) => telaFormularioPessoa(principal, { modo: "cadastrar" }) },
+    { padrao: /^\/pessoas\/(\d+)$/, secao: "pessoas", titulo: "Pessoa",
+        tela: (principal, [id]) => telaDetalhesPessoa(principal, { id }) },
+    { padrao: /^\/pessoas\/(\d+)\/editar$/, secao: "pessoas", titulo: "Editar pessoa",
+        tela: (principal, [id]) => telaFormularioPessoa(principal, { modo: "editar", id }) },
+    { padrao: /^\/pessoas\/(\d+)\/sugestoes$/, secao: "pessoas", titulo: "Sugestões",
+        tela: (principal, [id]) => telaSugestoesPessoa(principal, { id }) },
+    { padrao: /^\/favoritos$/, secao: "favoritos", titulo: "Favoritos",
+        tela: (principal, _, consulta) => telaFavoritos(principal, { consulta }) },
+    { padrao: /^\/historico$/, secao: "historico", titulo: "Histórico",
+        tela: (principal, _, consulta) => telaHistorico(principal, { consulta }) },
+    { padrao: /^\/catalogo$/, secao: "catalogo", tela: telaCatalogo, titulo: "Catálogo" },
+    { padrao: /^\/catalogo\/novo$/, secao: "catalogo", titulo: "Cadastrar presente",
+        tela: (principal) => telaFormularioPresente(principal, {}) },
+    { padrao: /^\/catalogo\/(\d+)\/editar$/, secao: "catalogo", titulo: "Editar presente",
+        tela: (principal, [id]) => telaFormularioPresente(principal, { id }) },
+    { padrao: /^\/configuracoes$/, secao: "configuracoes", tela: telaConfiguracoes, titulo: "Configurações" },
+];
 
-function abrirSecao(nome) {
-    abas.forEach((aba) => aba.classList.toggle("aba--ativa", aba.dataset.secao === nome));
-    document.querySelectorAll(".secao").forEach((secao) => {
-        secao.classList.toggle("secao--ativa", secao.id === `secao-${nome}`);
-    });
-    aoAbrir[nome]?.().catch(mostrarErro);
+const principal = document.getElementById("principal");
+
+function montarMenuLateral(conta) {
+    document.getElementById("lateral").innerHTML = `
+        ${logotipo()}
+        <hr class="lateral__divisor">
+        <nav class="menu" aria-label="Seções">
+            ${MENU.map((item) => `
+                <a class="menu__item" href="#/${item.secao}" data-secao="${item.secao}">
+                    <span class="menu__icone">${item.icone()}</span>${item.rotulo}
+                </a>`).join("")}
+        </nav>
+        <div class="lateral__rodape">
+            <span class="lateral__usuario" title="${escaparHtml(conta.email)}">${escaparHtml(conta.nome)}</span>
+            <button type="button" class="lateral__sair" data-acao="sair">${icones.sair()} Sair</button>
+        </div>`;
+    document.querySelector('#lateral [data-acao="sair"]').addEventListener("click", sair);
 }
 
-/** Imagens de lojas podem sair do ar ou bloquear o acesso: troca pelo ícone padrão. */
+function destacarMenu(secao) {
+    document.querySelectorAll(".menu__item").forEach((item) => {
+        const ativo = item.dataset.secao === secao;
+        item.classList.toggle("menu__item--ativo", ativo);
+        if (ativo) {
+            item.setAttribute("aria-current", "page");
+        } else {
+            item.removeAttribute("aria-current");
+        }
+    });
+}
+
+let navegacaoAtual = 0;
+
+/** Desenha a tela do endereço atual num conteiner novo, para que eventos da tela anterior não fiquem para trás. */
+async function navegar() {
+    const [caminho, textoConsulta = ""] = location.hash.replace(/^#/, "").split("?");
+    const rota = ROTAS.find((candidata) => candidata.padrao.test(caminho));
+    if (!rota) {
+        location.replace("#/inicio");
+        return;
+    }
+    const numero = ++navegacaoAtual;
+    destacarMenu(rota.secao);
+    document.title = `${rota.titulo} - Presente Ideal`;
+
+    const conteiner = document.createElement("div");
+    conteiner.className = "tela";
+    principal.replaceChildren(conteiner);
+    principal.scrollTop = 0;
+    try {
+        await rota.tela(conteiner, rota.padrao.exec(caminho).slice(1), new URLSearchParams(textoConsulta));
+    } catch (erro) {
+        if (numero !== navegacaoAtual) {
+            return;
+        }
+        if (erro.status === 404) {
+            conteiner.innerHTML = `<p class="vazio">Não encontramos o que você procurava.
+                <a class="link-discreto" href="#/inicio">Voltar ao início</a></p>`;
+        }
+        if (erro.status !== 401) {
+            mostrarErro(erro);
+        }
+    }
+}
+
+/** Imagens de lojas podem sair do ar ou bloquear o acesso: troca pelo quadro com "X" do wireframe. */
 function substituirImagensComErro() {
     document.addEventListener("error", (evento) => {
         const imagem = evento.target;
         if (imagem instanceof HTMLImageElement && imagem.classList.contains("imagem-produto")) {
-            const icone = document.createElement("div");
-            icone.className = `${imagem.className} imagem-produto--vazia`;
-            icone.setAttribute("aria-hidden", "true");
-            icone.textContent = "🎁";
-            imagem.replaceWith(icone);
+            imagem.replaceWith(marcadorErroImagem(imagem.className));
         }
     }, true);
 }
 
 async function iniciar() {
     substituirImagensComErro();
-    abas.forEach((aba) => aba.addEventListener("click", () => abrirSecao(aba.dataset.secao)));
+    window.addEventListener(EVENTO_SESSAO_EXPIRADA,
+        () => mostrarDeslogado("Sua sessão expirou. Entre novamente."), { once: true });
+
+    let conta;
+    try {
+        conta = await api.contaAtual();
+    } catch (erro) {
+        mostrarDeslogado();
+        mostrarErro(erro);
+        return;
+    }
+    if (!conta) {
+        mostrarDeslogado();
+        return;
+    }
+
     try {
         await carregarOpcoes();
-        preencherSelects();
-        iniciarSugestoes();
-        iniciarFavoritos();
-        iniciarHistorico();
-        await Promise.all([iniciarPessoas(), iniciarPresentes()]);
     } catch (erro) {
         mostrarErro(erro);
+        return;
     }
+    montarMenuLateral(conta);
+    document.body.dataset.estado = "logado";
+    window.addEventListener("hashchange", navegar);
+    await navegar();
 }
 
 iniciar();

@@ -1,4 +1,4 @@
-// Estado dos favoritos usado pelos botões "Favoritar" nas sugestões e no histórico.
+// Estado dos favoritos usado pelos corações dos cartões de produto.
 import { api } from "./api.js";
 import { CATALOGO } from "./itens.js";
 
@@ -17,7 +17,7 @@ export class EstadoFavoritos {
         this.favoritos = [];
     }
 
-    /** @param pessoaId se omitido, carrega os favoritos de todas as pessoas */
+    /** @param pessoaId se omitido, carrega os favoritos de todas as pessoas do usuário */
     async carregar(pessoaId) {
         this.favoritos = await api.listarFavoritos(pessoaId);
     }
@@ -37,10 +37,4 @@ export class EstadoFavoritos {
         this.favoritos.push(await api.favoritar({ pessoaId, origem, item }));
         return true;
     }
-}
-
-/** Atualiza o botão depois de alternar, sem redesenhar a lista inteira. */
-export function atualizarBotaoFavoritar(botao, favoritado) {
-    botao.setAttribute("aria-pressed", favoritado);
-    botao.textContent = favoritado ? "★ Favoritado" : "☆ Favoritar";
 }

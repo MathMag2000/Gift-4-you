@@ -6,6 +6,8 @@ import java.util.List;
 public class Presente implements Identificavel {
 
     private Integer id;
+    /** Conta dona do presente: cada conta tem o próprio catálogo. */
+    private final int usuarioId;
     private String nome;
     private Categoria categoria;
     private String descricao;
@@ -15,7 +17,8 @@ public class Presente implements Identificavel {
     private String linkCompra;
     private String imagemUrl;
 
-    public Presente(DadosPresente dados) {
+    public Presente(int usuarioId, DadosPresente dados) {
+        this.usuarioId = usuarioId;
         atualizar(dados);
     }
 
@@ -44,6 +47,14 @@ public class Presente implements Identificavel {
     @Override
     public void setId(Integer id) {
         this.id = id;
+    }
+
+    public int getUsuarioId() {
+        return usuarioId;
+    }
+
+    public boolean pertenceA(int idUsuario) {
+        return usuarioId == idUsuario;
     }
 
     public String getNome() {

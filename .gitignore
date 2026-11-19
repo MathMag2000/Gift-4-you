@@ -35,3 +35,6 @@ bin/
 .DS_Store
 ### Chave da IA (nunca enviar ao GitHub) ###
 chave-ia.properties
+
+### Senha do banco de dados (nunca enviar ao GitHub) ###
+banco.properties

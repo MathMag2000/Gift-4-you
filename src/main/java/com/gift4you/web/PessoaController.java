@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/** Pessoas do usuário logado. */
 @RestController
 @RequestMapping("/api/pessoas")
 public class PessoaController {
@@ -27,29 +28,29 @@ public class PessoaController {
     }
 
     @GetMapping
-    public List<Pessoa> listar() {
-        return pessoaService.listar();
+    public List<Pessoa> listar(UsuarioLogado usuario) {
+        return pessoaService.listar(usuario.id());
     }
 
     @GetMapping("/{id}")
-    public Pessoa buscar(@PathVariable int id) {
-        return pessoaService.buscarPorId(id);
+    public Pessoa buscar(UsuarioLogado usuario, @PathVariable int id) {
+        return pessoaService.buscarPorId(usuario.id(), id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Pessoa cadastrar(@RequestBody DadosPessoa dados) {
-        return pessoaService.cadastrar(dados);
+    public Pessoa cadastrar(UsuarioLogado usuario, @RequestBody DadosPessoa dados) {
+        return pessoaService.cadastrar(usuario.id(), dados);
     }
 
     @PutMapping("/{id}")
-    public Pessoa alterar(@PathVariable int id, @RequestBody DadosPessoa dados) {
-        return pessoaService.alterar(id, dados);
+    public Pessoa alterar(UsuarioLogado usuario, @PathVariable int id, @RequestBody DadosPessoa dados) {
+        return pessoaService.alterar(usuario.id(), id, dados);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void remover(@PathVariable int id) {
-        pessoaService.remover(id);
+    public void remover(UsuarioLogado usuario, @PathVariable int id) {
+        pessoaService.remover(usuario.id(), id);
     }
 }

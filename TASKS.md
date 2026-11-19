@@ -64,7 +64,9 @@
 * [x] Criar API REST de pessoas, presentes e sugestões
 * [x] Criar páginas de cadastro de pessoas e presentes
 * [x] Criar página de sugestões (catálogo e IA)
-* [ ] Persistir os dados em banco de dados
+* [x] Persistir os dados em banco de dados (PostgreSQL)
+* [x] Refazer o site no visual do wireframe do Figma
+* [x] Preparar a publicação (Dockerfile, perfil de produção, catálogo por conta, limites e cabeçalhos de segurança)
 * [ ] Publicar o site
 
 ## Favoritos
@@ -81,7 +83,7 @@
 
 ## Validações
 
-* [ ] Validar nome
+* [x] Validar nome
 * [x] Validar idade
 * [x] Validar orçamento
 * [x] Impedir orçamento mínimo maior que o máximo
@@ -89,12 +91,12 @@
 
 ## Testes
 
-* [ ] Testar cadastro de pessoa
-* [ ] Testar alteração de pessoa
-* [ ] Testar remoção de pessoa
-* [ ] Testar cadastro de presente
-* [ ] Testar filtros de orçamento
-* [ ] Testar geração de sugestões
+* [x] Testar cadastro de pessoa
+* [x] Testar alteração de pessoa
+* [x] Testar remoção de pessoa
+* [x] Testar cadastro de presente
+* [x] Testar filtros de orçamento
+* [x] Testar geração de sugestões
 * [x] Testar favoritos
 * [x] Testar histórico
 
@@ -116,6 +118,13 @@
 
 ## Conta e autenticação
 
+* [x] Criar classe Usuario
+* [x] Implementar cadastro de usuário
+* [x] Implementar login de usuário
+* [x] Validar e-mail e senha
+* [x] Implementar logout
+* [x] Associar pessoas cadastradas à conta do usuário
+* [x] Testar cadastro, login, logout e separação dos dados entre contas
 * [ ] Criar classe Usuario
 * [ ] Implementar cadastro de usuário
 * [ ] Implementar login de usuário
