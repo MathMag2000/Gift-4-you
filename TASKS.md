@@ -125,3 +125,9 @@
 * [x] Implementar logout
 * [x] Associar pessoas cadastradas à conta do usuário
 * [x] Testar cadastro, login, logout e separação dos dados entre contas
+* [ ] Criar classe Usuario
+* [ ] Implementar cadastro de usuário
+* [ ] Implementar login de usuário
+* [ ] Validar e-mail e senha
+* [ ] Implementar logout
+* [ ] Associar pessoas cadastradas à conta do usuário
