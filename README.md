@@ -4,6 +4,45 @@ Sistema web de sugestões de presentes personalizados. Você cadastra a pessoa (
 interesses, o que ela não gosta, ocasião e orçamento) e o sistema sugere presentes do catálogo ou gera
 ideias com IA, com link de compra. As sugestões podem ser favoritadas e ficam guardadas no histórico.
 
+## Como rodar (passo a passo)
+
+Resumo para Windows. Cada passo é explicado em detalhes nas seções seguintes.
+
+1. **Instale o JDK 25** e o **PostgreSQL** (veja [Requisitos](#requisitos)).
+2. **Baixe o projeto:**
+
+   ```powershell
+   git clone https://github.com/MathMag2000/Gift-4-you.git
+   cd Gift-4-you
+   ```
+
+3. **Crie o banco** `gift4you` (no *SQL Shell (psql)* ou no pgAdmin):
+
+   ```sql
+   CREATE DATABASE gift4you;
+   ```
+
+   Se a senha do usuário `postgres` não for `postgres`, crie o arquivo `banco.properties` com a sua senha
+   (veja [Banco de dados](#banco-de-dados-postgresql)). Com Docker, basta `docker compose up -d`.
+
+4. **Informe onde está o Java**, se o comando `java -version` não mostrar a versão 25
+   (veja [Configurando o JAVA_HOME](#configurando-o-java_home-windows)):
+
+   ```powershell
+   $env:JAVA_HOME = "C:\caminho\do\jdk-25"
+   ```
+
+5. **Rode o servidor:**
+
+   ```powershell
+   .\mvnw.cmd spring-boot:run
+   ```
+
+6. Quando aparecer `Tomcat started on port 8080`, abra **http://localhost:8080**, clique em **Criar conta** e
+   comece a usar. Para parar o servidor, pressione `Ctrl + C` no terminal.
+
+Opcional: para o botão **Ideias com IA**, configure a chave do Gemini (veja [Ideias com IA](#ideias-com-ia-opcional)).
+
 ## Requisitos
 
 | Ferramenta | Versão | Observação |
@@ -22,6 +61,28 @@ java -version
 
 A variável de ambiente `JAVA_HOME` deve apontar para a pasta do JDK 25. Sem ela, o `mvnw` mostra o erro
 *"The JAVA_HOME environment variable is not defined correctly"*.
+
+### Configurando o JAVA_HOME (Windows)
+
+Descubra a pasta do JDK 25. Lugares comuns:
+
+- instalado pelo IntelliJ: `C:\Users\SEU_USUARIO\.jdks\temurin-25...`
+- instalado pelo Adoptium: `C:\Program Files\Eclipse Adoptium\jdk-25...`
+
+**Só para o terminal aberto** (precisa repetir ao abrir outro terminal):
+
+```powershell
+$env:JAVA_HOME = "C:\Users\SEU_USUARIO\.jdks\temurin-25.0.4.1"
+```
+
+**Para sempre** (depois, feche e abra o terminal):
+
+```powershell
+setx JAVA_HOME "C:\Users\SEU_USUARIO\.jdks\temurin-25.0.4.1"
+```
+
+Também dá para configurar em *Configurações do Windows → Sistema → Sobre → Configurações avançadas do
+sistema → Variáveis de Ambiente*.
 
 ## Instalação
 
@@ -90,6 +151,9 @@ Quando aparecer `Tomcat started on port 8080`, abra no navegador:
 **http://localhost:8080**
 
 Para parar o servidor, pressione `Ctrl + C` no terminal.
+
+Se você já tinha aberto uma versão antiga do site e a página aparecer em branco, recarregue sem cache uma
+vez com **Ctrl + Shift + R**.
 
 ### Conta de usuário
 
@@ -219,6 +283,10 @@ instalado nem de Docker.
 | `release version 25 not supported` | O Java instalado é mais antigo. Instale o JDK 25. |
 | "IA não configurada" ao gerar ideias | Crie o arquivo `chave-ia.properties` na pasta do projeto (veja acima) e reinicie o servidor. |
 | "O Gemini recusou a chave de API" | Confira se a chave em `chave-ia.properties` foi copiada inteira, sem espaços. |
+| "O Gemini está sobrecarregado" ou "demorou demais para responder" | Instabilidade do Google, não do projeto. O sistema já tenta um modelo reserva; espere um pouco e tente de novo. |
+| "Você atingiu o limite de pedidos de ideias com IA" | Cada conta pode pedir 10 vezes por hora (veja os limites acima). Espere o tempo indicado. |
+| Página em branco no navegador | O navegador guardou arquivos de uma versão antiga. Recarregue com **Ctrl + Shift + R**. |
+| "Muitas tentativas de login sem sucesso" | Foram 5 senhas erradas seguidas nesse e-mail. Espere até 15 minutos ou reinicie o servidor. |
 | `Connection to localhost:5432 refused` | O PostgreSQL não está rodando. Inicie o serviço do PostgreSQL ou rode `docker compose up -d`. |
 | `password authentication failed for user "postgres"` | A senha do banco está errada. Coloque a senha certa em `banco.properties` (veja acima). |
 | `database "gift4you" does not exist` | Crie o banco: `psql -U postgres -c "CREATE DATABASE gift4you"`. |
