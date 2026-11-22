@@ -1,4 +1,4 @@
-// Janela sobreposta (detalhes do produto e confirmações). Fecha com Esc, com o "✕" ou clicando fora.
+// Janela sobreposta (detalhes do produto e confirmações). Fecha com Esc, com o botão de fechar ou clicando fora.
 
 /**
  * @returns {{ caixa: HTMLElement, fechar: () => void }}

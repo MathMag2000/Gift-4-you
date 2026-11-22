@@ -14,7 +14,7 @@ import java.io.IOException;
 public class CabecalhosSegurancaFilter extends OncePerRequestFilter {
 
     /**
-     * Content-Security-Policy: o site só executa os próprios scripts e estilos (mais a fonte Inter do Google),
+     * Content-Security-Policy: o site só executa os próprios scripts e estilos (mais as fontes do Google Fonts),
      * o que bloqueia scripts injetados. Imagens podem vir de qualquer loja em https, pois as fotos dos
      * produtos são das lojas. frame-ancestors 'none' impede que o site seja aberto dentro de outro.
      */

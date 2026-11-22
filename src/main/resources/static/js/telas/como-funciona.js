@@ -29,7 +29,7 @@ export function telaComoFunciona(principal) {
                 o presente ideal.</p>
         </div>
         <div class="acoes">
-            <a class="botao botao--grande" href="#/sugestoes/nova">Quero começar →</a>
-            <a class="botao botao--contorno" href="#/inicio">← Voltar</a>
+            <a class="botao botao--grande" href="#/sugestoes/nova">Quero começar ${icones.seta()}</a>
+            <a class="botao botao--contorno" href="#/inicio">${icones.voltar()} Voltar</a>
         </div>`;
 }

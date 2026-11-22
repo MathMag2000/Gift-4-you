@@ -1,5 +1,6 @@
 // Peças dos formulários no estilo do wireframe: blocos com título, campos e tags selecionáveis.
 import { capitalizar, escaparHtml } from "../util.js";
+import { icones } from "./icones.js";
 
 /** Cartão com título em maiúsculas, como "SOBRE A PESSOA". */
 export function bloco(titulo, conteudo, ajuda = "") {
@@ -41,7 +42,7 @@ export function valorMarcado(formulario, nome) {
 }
 
 export function botaoVoltar(destino, texto) {
-    return `<a class="voltar" href="${destino}">← ${escaparHtml(texto)}</a>`;
+    return `<a class="voltar" href="${destino}">${icones.voltar(15)}${escaparHtml(texto)}</a>`;
 }
 
 export function cabecalhoPagina(titulo, subtitulo = "", acoes = "") {
