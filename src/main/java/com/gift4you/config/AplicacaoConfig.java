@@ -111,10 +111,13 @@ public class AplicacaoConfig {
         return historicoService;
     }
 
-    /** Loja onde as ideias da IA são procuradas. */
+    /**
+     * Loja onde as ideias da IA são procuradas. No site publicado, a busca pode passar por um intermediário
+     * (variável AMAZON_PROXY_URL), pois a Amazon costuma bloquear servidores de hospedagem (veja o README).
+     */
     @Bean
-    public LojaOnline lojaOnline() {
-        return new LojaAmazon(new LeitorBuscaAmazon());
+    public LojaOnline lojaOnline(@Value("${amazon.intermediario:}") String intermediario) {
+        return new LojaAmazon(new LeitorBuscaAmazon(), intermediario);
     }
 
     @Bean

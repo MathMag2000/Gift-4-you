@@ -239,6 +239,12 @@ O projeto traz um `Dockerfile` pronto para hospedagens que aceitam Docker, como
    | `DB_USERNAME` | `gift4you` | sim |
    | `DB_PASSWORD` | a senha do banco | sim |
    | `GEMINI_API_KEY` | a chave da IA | não (sem ela, só o botão de IA fica indisponível) |
+   | `AMAZON_PROXY_URL` | `https://api.scraperapi.com/?api_key=SUA_CHAVE&country_code=br&url={url}` | não (veja abaixo) |
+
+   A Amazon costuma bloquear buscas vindas de servidores de hospedagem. Sem `AMAZON_PROXY_URL`, as ideias da
+   IA continuam funcionando, mas ficam com o link de busca e sem foto. Com ela, a busca passa por um serviço de
+   leitura de páginas (ex.: ScraperAPI ou ScrapingBee), que encontra o produto específico. Informe o endereço do
+   serviço com a sua chave e `{url}` no lugar do endereço da Amazon.
 
    Atenção ao formato de `DB_URL`: ele começa com `jdbc:postgresql://`. Muitas hospedagens mostram o endereço
    como `postgres://usuario:senha@servidor:5432/banco`. Nesse caso, use `jdbc:postgresql://servidor:5432/banco` em

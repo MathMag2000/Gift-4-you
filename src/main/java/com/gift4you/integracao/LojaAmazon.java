@@ -20,16 +20,26 @@ import java.util.regex.Pattern;
  * Procura produtos lendo a página de busca da Amazon Brasil.
  * Atenção: os Termos de Uso da Amazon não permitem leitura automática do site, e a Amazon pode
  * bloquear as consultas. Quando a busca falha, as ideias usam o link de busca.
+ * <p>
+ * A Amazon costuma bloquear servidores de hospedagem (data centers). Para o site publicado, a busca pode
+ * passar por um intermediário: um serviço de leitura de páginas (ex.: ScraperAPI, ScrapingBee) que busca a
+ * página por endereços que a Amazon aceita. Ele é informado como um modelo de endereço com {@value #MARCADOR},
+ * trocado pelo endereço da busca na Amazon.
  */
 public class LojaAmazon implements LojaOnline {
 
     private static final Logger LOG = LoggerFactory.getLogger(LojaAmazon.class);
+
+    /** Parte do modelo do intermediário trocada pelo endereço da busca na Amazon (já codificado). */
+    public static final String MARCADOR = "{url}";
 
     private static final String ENDERECO_BUSCA = "https://www.amazon.com.br/s?k=";
     private static final Pattern LINK_PRODUTO = Pattern.compile(
             "^" + Pattern.quote(LeitorBuscaAmazon.ENDERECO_PRODUTO) + "[A-Z0-9]{10}$");
     private static final Pattern IMAGEM_DA_LOJA = Pattern.compile("^https://m\\.media-amazon\\.com/images/[^\\s\"'<>]+$");
     private static final Duration TEMPO_LIMITE = Duration.ofSeconds(10);
+    /** Os intermediários tentam outros endereços quando a Amazon bloqueia, o que pode levar mais tempo. */
+    private static final Duration TEMPO_LIMITE_INTERMEDIARIO = Duration.ofSeconds(60);
     private static final int TAMANHO_MAXIMO_PAGINA = 4 * 1024 * 1024;
 
     private final HttpClient cliente = HttpClient.newBuilder()
@@ -37,9 +47,49 @@ public class LojaAmazon implements LojaOnline {
             .followRedirects(HttpClient.Redirect.NORMAL)
             .build();
     private final LeitorBuscaAmazon leitor;
+    /** Modelo do endereço do intermediário, ou nulo para consultar a Amazon diretamente. */
+    private final String intermediario;
+    private final Duration tempoLimite;
 
     public LojaAmazon(LeitorBuscaAmazon leitor) {
+        this(leitor, null);
+    }
+
+    /**
+     * @param intermediario modelo de endereço https com {@value #MARCADOR} (contém a chave do serviço, por isso
+     *                      nunca vai para os registros); nulo ou vazio para consultar a Amazon diretamente
+     */
+    public LojaAmazon(LeitorBuscaAmazon leitor, String intermediario) {
+        this(leitor, validarIntermediario(intermediario), TEMPO_LIMITE_INTERMEDIARIO);
+    }
+
+    /** Sem validação do intermediário: permite um servidor falso local nos testes. */
+    LojaAmazon(LeitorBuscaAmazon leitor, String intermediario, Duration tempoLimiteIntermediario) {
         this.leitor = leitor;
+        this.intermediario = intermediario == null || intermediario.isBlank() ? null : intermediario.trim();
+        this.tempoLimite = this.intermediario == null ? TEMPO_LIMITE : tempoLimiteIntermediario;
+    }
+
+    private static String validarIntermediario(String modelo) {
+        if (modelo == null || modelo.isBlank()) {
+            return null;
+        }
+        String texto = modelo.trim();
+        if (!texto.contains(MARCADOR) || !texto.startsWith("https://")) {
+            throw new IllegalArgumentException("AMAZON_PROXY_URL deve ser um endereço https com " + MARCADOR
+                    + " no lugar do endereço da Amazon, por exemplo: "
+                    + "https://api.scraperapi.com/?api_key=SUA_CHAVE&country_code=br&url=" + MARCADOR);
+        }
+        return texto;
+    }
+
+    /** Endereço consultado: a busca na Amazon, diretamente ou pelo intermediário. */
+    URI enderecoConsulta(String nomeProduto) {
+        String busca = linkBusca(nomeProduto);
+        if (intermediario == null) {
+            return URI.create(busca);
+        }
+        return URI.create(intermediario.replace(MARCADOR, URLEncoder.encode(busca, StandardCharsets.UTF_8)));
     }
 
     @Override
@@ -49,25 +99,28 @@ public class LojaAmazon implements LojaOnline {
 
     @Override
     public List<ProdutoLoja> encontrarProdutos(String nomeProduto) {
+        String via = intermediario == null ? "" : " (pelo intermediário)";
         try {
             HttpResponse<InputStream> resposta = cliente.send(
-                    RequisicaoNavegador.paginaHtml(URI.create(linkBusca(nomeProduto)), TEMPO_LIMITE),
+                    RequisicaoNavegador.paginaHtml(enderecoConsulta(nomeProduto), tempoLimite),
                     HttpResponse.BodyHandlers.ofInputStream());
             try (InputStream corpo = resposta.body()) {
                 if (resposta.statusCode() != 200) {
-                    LOG.info("Busca na Amazon por \"{}\" respondeu {}", nomeProduto, resposta.statusCode());
+                    LOG.info("Busca na Amazon{} por \"{}\" respondeu {}", via, nomeProduto, resposta.statusCode());
                     return List.of();
                 }
                 String html = new String(corpo.readNBytes(TAMANHO_MAXIMO_PAGINA), StandardCharsets.UTF_8);
                 List<ProdutoLoja> produtos = leitor.produtos(html);
                 if (produtos.isEmpty()) {
-                    LOG.info("Nenhum produto lido na busca da Amazon por \"{}\" (página mudou ou foi bloqueada)",
-                            nomeProduto);
+                    LOG.info("Nenhum produto lido na busca da Amazon{} por \"{}\" (página mudou ou foi bloqueada)",
+                            via, nomeProduto);
                 }
                 return produtos;
             }
         } catch (IOException e) {
-            LOG.info("Não foi possível consultar a Amazon por \"{}\": {}", nomeProduto, e.getMessage());
+            // Só o tipo do erro: a mensagem poderia conter o endereço do intermediário, com a chave dele.
+            LOG.info("Não foi possível consultar a Amazon{} por \"{}\": {}", via, nomeProduto,
+                    e.getClass().getSimpleName());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
