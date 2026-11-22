@@ -1,6 +1,6 @@
 import { api } from "../api.js";
 import { EstadoFavoritos } from "../favoritar.js";
-import { cabecalhoPagina, nomeDaPessoa, seletorPessoas, vazio } from "../componentes/formulario.js";
+import { cabecalhoPagina, seletorPessoas, vazio } from "../componentes/formulario.js";
 import { icones } from "../componentes/icones.js";
 import { renderizarProdutos } from "../componentes/produtos.js";
 import { descricao } from "../opcoes.js";
@@ -8,8 +8,8 @@ import { escaparHtml, formatarDataHora, formatarMoeda, mostrarErro } from "../ut
 
 function resumo(registro) {
     const quantidade = registro.itens.length;
-    return quantidade === 0 ? "nenhuma sugestão encontrada"
-        : quantidade === 1 ? "1 sugestão" : `${quantidade} sugestões`;
+    return quantidade === 0 ? "nenhuma ideia encontrada"
+        : quantidade === 1 ? "1 ideia" : `${quantidade} ideias`;
 }
 
 export async function telaHistorico(principal, { consulta }) {
@@ -17,7 +17,7 @@ export async function telaHistorico(principal, { consulta }) {
     const pessoaInicial = consulta.get("pessoa") ?? "";
 
     principal.innerHTML = `
-        ${cabecalhoPagina("Histórico", "Todas as sugestões geradas, das mais recentes para as mais antigas.",
+        ${cabecalhoPagina("Histórico", "Todas as ideias geradas com IA, das mais recentes para as mais antigas.",
             pessoas.length > 1 ? seletorPessoas("filtro-historico", pessoas, pessoaInicial) : "")}
         <div id="lista-historico" class="lista"></div>`;
 
@@ -30,17 +30,22 @@ export async function telaHistorico(principal, { consulta }) {
         const pessoaId = (filtro ? filtro.value : pessoaInicial) || undefined;
         [registros] = await Promise.all([api.listarHistorico(pessoaId), favoritos.carregar()]);
         if (registros.length === 0) {
-            lista.innerHTML = vazio(icones.relogio(32), "Nenhuma sugestão gerada ainda.",
-                `<a class="botao" href="#/sugestoes/nova">Quero sugestões →</a>`);
+            lista.innerHTML = vazio(icones.relogio(32),
+                "Nenhuma ideia gerada com IA ainda.<br>Abra uma pessoa e use o botão \"Gerar ideias com IA\".",
+                `<a class="botao" href="#/pessoas">Ver pessoas ${icones.seta()}</a>`);
             return;
         }
         lista.innerHTML = registros.map((registro, indice) => `
-            <article class="cartao registro" data-indice="${indice}">
+            <article class="cartao registro ${registro.pessoaRemovida ? "registro--pessoa-removida" : ""}"
+                     data-indice="${indice}">
                 <div class="registro__topo">
                     <div>
                         <h2 class="registro__titulo">
-                            ${escaparHtml(nomeDaPessoa(pessoas, registro.pessoaId))}
-                            <span class="selo">${escaparHtml(descricao("origens", registro.origem))}</span>
+                            ${registro.pessoaRemovida
+                                ? escaparHtml(registro.pessoaNome)
+                                : `<a class="registro__pessoa" href="#/pessoas/${registro.pessoaId}">${escaparHtml(registro.pessoaNome)}</a>`}
+                            <span class="selo selo--ia">${icones.brilho(11)}${escaparHtml(descricao("origens", registro.origem))}</span>
+                            ${registro.pessoaRemovida ? `<span class="selo selo--removida">Pessoa excluída</span>` : ""}
                         </h2>
                         <p class="registro__dados">
                             ${formatarDataHora(registro.realizadoEm)} · ${escaparHtml(descricao("ocasioes", registro.ocasiao))}
@@ -51,7 +56,7 @@ export async function telaHistorico(principal, { consulta }) {
                 </div>
                 ${registro.itens.length ? `
                     <button type="button" class="botao botao--contorno botao--pequeno" data-acao="ver"
-                            aria-expanded="false">Ver sugestões</button>
+                            aria-expanded="false">Ver ideias</button>
                     <div class="grade-produtos registro__itens" hidden></div>` : ""}
             </article>`).join("");
     }
@@ -72,7 +77,7 @@ export async function telaHistorico(principal, { consulta }) {
         }
         grade.hidden = !abrir;
         botao.setAttribute("aria-expanded", abrir);
-        botao.textContent = abrir ? "Ocultar sugestões" : "Ver sugestões";
+        botao.textContent = abrir ? "Ocultar ideias" : "Ver ideias";
     });
 
     filtro?.addEventListener("change", () => carregar().catch(mostrarErro));

@@ -4,6 +4,8 @@ import com.gift4you.exception.CredenciaisInvalidasException;
 import com.gift4you.exception.EmailJaCadastradoException;
 import com.gift4you.exception.LimiteExcedidoException;
 import com.gift4you.exception.UsuarioNaoEncontradoException;
+import com.gift4you.exception.ValidacaoException;
+import com.gift4you.model.DadosAlteracaoSenha;
 import com.gift4you.model.DadosCadastroUsuario;
 import com.gift4you.model.DadosLogin;
 import com.gift4you.model.Usuario;
@@ -100,6 +102,40 @@ public class UsuarioService {
 
     public Usuario buscarPorId(int id) {
         return repository.buscarPorId(id).orElseThrow(() -> new UsuarioNaoEncontradoException(id));
+    }
+
+    public Usuario alterarNome(int usuarioId, String nome) {
+        Usuario usuario = buscarPorId(usuarioId);
+        usuario.alterarNome(validador.validarNome(nome));
+        return repository.atualizar(usuario);
+    }
+
+    /**
+     * Troca a senha depois de conferir a atual. Erros na senha atual contam como falhas de login do e-mail
+     * da conta, para que esta tela não sirva para testar senhas sem limite.
+     */
+    public Usuario alterarSenha(int usuarioId, DadosAlteracaoSenha dados) {
+        Usuario usuario = buscarPorId(usuarioId);
+        String chaveEmail = "login:" + usuario.getEmail();
+        recusarSeBloqueado(limites.falhasPorEmail(), chaveEmail);
+
+        String senhaAtual = dados == null ? null : dados.senhaAtual();
+        if (senhaAtual == null || senhaAtual.isEmpty()) {
+            throw new ValidacaoException("Informe a senha atual.");
+        }
+        if (senhaAtual.length() > UsuarioValidador.TAMANHO_MAXIMO_SENHA
+                || !codificador.confere(senhaAtual, usuario.getSenhaHash())) {
+            limites.falhasPorEmail().registrar(chaveEmail);
+            throw new ValidacaoException("A senha atual está incorreta.");
+        }
+        limites.falhasPorEmail().limpar(chaveEmail);
+
+        validador.validarSenha(dados.novaSenha());
+        if (dados.novaSenha().equals(senhaAtual)) {
+            throw new ValidacaoException("A nova senha deve ser diferente da atual.");
+        }
+        usuario.alterarSenhaHash(codificador.codificar(dados.novaSenha()));
+        return repository.atualizar(usuario);
     }
 
     private void recusarSeBloqueado(LimiteDeTaxa limite, String chave) {

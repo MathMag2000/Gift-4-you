@@ -27,7 +27,7 @@ public class PresenteValidador extends ValidadorBase {
         String linkCompra = validarLinkCompra(dados.linkCompra());
 
         return new DadosPresente(nome, dados.categoria(), descricao, dados.preco(),
-                normalizarLista(dados.caracteristicas()), ocasioes, linkCompra);
+                normalizarLista(dados.caracteristicas()), ocasioes, linkCompra, dados.pessoaId());
     }
 
     /** Aceita somente endereços http ou https completos, o que também evita links como "javascript:". */

@@ -10,4 +10,11 @@ public class PresenteRepositoryEmMemoria extends RepositorioEmMemoria<Presente> 
     public synchronized List<Presente> listarPorUsuario(int usuarioId) {
         return listarTodos().stream().filter(presente -> presente.pertenceA(usuarioId)).toList();
     }
+
+    @Override
+    public synchronized void desvincularPessoa(int pessoaId) {
+        listarTodos().stream()
+                .filter(presente -> presente.cadastradoPara(pessoaId))
+                .forEach(Presente::desvincularPessoa);
+    }
 }

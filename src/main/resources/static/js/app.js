@@ -10,7 +10,6 @@ import { telaFavoritos } from "./telas/favoritos.js";
 import { telaHistorico } from "./telas/historico.js";
 import { telaInicio } from "./telas/inicio.js";
 import { telaFormularioPessoa } from "./telas/pessoa-formulario.js";
-import { telaSugestoesPessoa } from "./telas/pessoa-sugestoes.js";
 import { telaDetalhesPessoa, telaPessoas } from "./telas/pessoas.js";
 import { escaparHtml, marcadorErroImagem, mostrarErro } from "./util.js";
 
@@ -37,15 +36,16 @@ const ROTAS = [
         tela: (principal, [id]) => telaDetalhesPessoa(principal, { id }) },
     { padrao: /^\/pessoas\/(\d+)\/editar$/, secao: "pessoas", titulo: "Editar pessoa",
         tela: (principal, [id]) => telaFormularioPessoa(principal, { modo: "editar", id }) },
-    { padrao: /^\/pessoas\/(\d+)\/sugestoes$/, secao: "pessoas", titulo: "Sugestões",
-        tela: (principal, [id]) => telaSugestoesPessoa(principal, { id }) },
+    // Endereço antigo: as sugestões agora ficam na própria página da pessoa.
+    { padrao: /^\/pessoas\/(\d+)\/sugestoes$/, secao: "pessoas", titulo: "Pessoa",
+        tela: (principal, [id]) => location.replace(`#/pessoas/${id}`) },
     { padrao: /^\/favoritos$/, secao: "favoritos", titulo: "Favoritos",
         tela: (principal, _, consulta) => telaFavoritos(principal, { consulta }) },
     { padrao: /^\/historico$/, secao: "historico", titulo: "Histórico",
         tela: (principal, _, consulta) => telaHistorico(principal, { consulta }) },
     { padrao: /^\/catalogo$/, secao: "catalogo", tela: telaCatalogo, titulo: "Catálogo" },
     { padrao: /^\/catalogo\/novo$/, secao: "catalogo", titulo: "Cadastrar presente",
-        tela: (principal) => telaFormularioPresente(principal, {}) },
+        tela: (principal, _, consulta) => telaFormularioPresente(principal, { pessoaInicial: consulta.get("pessoa") }) },
     { padrao: /^\/catalogo\/(\d+)\/editar$/, secao: "catalogo", titulo: "Editar presente",
         tela: (principal, [id]) => telaFormularioPresente(principal, { id }) },
     { padrao: /^\/configuracoes$/, secao: "configuracoes", tela: telaConfiguracoes, titulo: "Configurações" },

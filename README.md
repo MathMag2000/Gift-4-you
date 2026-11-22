@@ -2,7 +2,9 @@
 
 Sistema web de sugestões de presentes personalizados. Você cadastra a pessoa (idade, vínculo, gostos e
 interesses, o que ela não gosta, ocasião e orçamento) e o sistema sugere presentes do catálogo ou gera
-ideias com IA, com link de compra. As sugestões podem ser favoritadas e ficam guardadas no histórico.
+ideias com IA, com link de compra. Presentes do catálogo podem ser cadastrados para uma pessoa específica
+e aparecem na página dela. As sugestões podem ser favoritadas, e cada geração de ideias com IA fica guardada
+no histórico, que é mantido mesmo se a pessoa for excluída.
 
 ## Como rodar (passo a passo)
 
@@ -311,7 +313,7 @@ src/main/java/com/gift4you/
 └── exception/    exceções do sistema
 src/main/resources/static/   site (HTML, CSS e JavaScript, sem frameworks), no visual do wireframe do Figma
 ├── js/app.js                entrada do site: sessão, menu lateral e rotas (#/inicio, #/pessoas, ...)
-├── js/telas/                uma tela por arquivo (início, pessoas, sugestões, favoritos, histórico, catálogo...)
+├── js/telas/                uma tela por arquivo (início, pessoas, favoritos, histórico, catálogo, configurações...)
 └── js/componentes/          peças reutilizadas: cartões de produto, janela de detalhes, formulários, ícones
 src/main/resources/schema.sql   tabelas do banco de dados
 src/test/                    testes automatizados

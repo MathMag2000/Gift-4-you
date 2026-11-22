@@ -7,9 +7,9 @@ package com.gift4you.model;
 public class Usuario implements Identificavel {
 
     private Integer id;
-    private final String nome;
+    private String nome;
     private final String email;
-    private final String senhaHash;
+    private String senhaHash;
 
     public Usuario(String nome, String email, String senhaHash) {
         this.nome = nome;
@@ -37,6 +37,16 @@ public class Usuario implements Identificavel {
 
     public String getSenhaHash() {
         return senhaHash;
+    }
+
+    /** O nome já deve chegar validado (ver {@code UsuarioValidador}). */
+    public void alterarNome(String nome) {
+        this.nome = nome;
+    }
+
+    /** Recebe o hash da nova senha, nunca a senha em si. */
+    public void alterarSenhaHash(String senhaHash) {
+        this.senhaHash = senhaHash;
     }
 
     @Override

@@ -26,6 +26,12 @@ public class SugestaoController {
         return sugestaoService.gerarSugestoes(usuario.id(), pessoaId);
     }
 
+    /** Presentes que o usuário cadastrou para a pessoa no catálogo. */
+    @GetMapping("/presentes")
+    public List<SugestaoPresente> presentesDaPessoa(UsuarioLogado usuario, @PathVariable int pessoaId) {
+        return sugestaoService.presentesDaPessoa(usuario.id(), pessoaId);
+    }
+
     /** POST porque cada chamada consulta a IA e pode gerar ideias diferentes. */
     @PostMapping("/ideias-ia")
     public ResultadoIdeias ideiasComIa(UsuarioLogado usuario, @PathVariable int pessoaId) {

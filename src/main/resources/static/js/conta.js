@@ -1,6 +1,6 @@
 // Tela de login e de criação de conta, no estilo do wireframe.
 import { api } from "./api.js";
-import { logotipo } from "./componentes/icones.js";
+import { icones, logotipo } from "./componentes/icones.js";
 import { mostrarAviso, mostrarErro } from "./util.js";
 
 const FORMATO_EMAIL = /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/;
@@ -9,15 +9,15 @@ const MODOS = {
     login: {
         titulo: "Entrar",
         subtitulo: "Acesse sua conta para continuar.",
-        botao: "Entrar →",
+        botao: `Entrar ${icones.seta()}`,
         links: `<button type="button" class="link-conta" data-modo="cadastro">
                     Ainda não tenho conta — <strong>Criar conta</strong></button>`,
     },
     cadastro: {
         titulo: "Criar conta",
         subtitulo: "Preencha os dados para criar sua conta.",
-        botao: "Criar conta →",
-        links: `<button type="button" class="link-conta" data-modo="login">← Já tenho uma conta</button>`,
+        botao: `Criar conta ${icones.seta()}`,
+        links: `<button type="button" class="link-conta" data-modo="login">${icones.voltar(14)} Já tenho uma conta</button>`,
     },
 };
 

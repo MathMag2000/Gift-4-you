@@ -79,8 +79,12 @@ public class AplicacaoConfig {
     }
 
     @Bean
-    public PresenteService presenteService(JdbcClient jdbc, ExtratorImagemProduto extratorImagemProduto) {
-        return new PresenteService(new PresenteRepositoryJdbc(jdbc), new PresenteValidador(), extratorImagemProduto);
+    public PresenteService presenteService(JdbcClient jdbc, ExtratorImagemProduto extratorImagemProduto,
+                                           PessoaService pessoaService) {
+        PresenteService presenteService = new PresenteService(new PresenteRepositoryJdbc(jdbc), new PresenteValidador(),
+                extratorImagemProduto, pessoaService);
+        pessoaService.adicionarOuvinteRemocao(presenteService);
+        return presenteService;
     }
 
     @Bean

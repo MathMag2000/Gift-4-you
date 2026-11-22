@@ -57,6 +57,8 @@ export const api = {
     cadastrarConta: (dados) => requisitar("POST", "/api/conta/cadastro", dados, SEM_AVISO),
     entrar: (dados) => requisitar("POST", "/api/conta/login", dados, SEM_AVISO),
     sair: () => requisitar("POST", "/api/conta/logout", undefined, SEM_AVISO),
+    alterarNomeConta: (nome) => requisitar("PUT", "/api/conta/nome", { nome }),
+    alterarSenha: (dados) => requisitar("PUT", "/api/conta/senha", dados),
 
     listarPessoas: () => requisitar("GET", "/api/pessoas"),
     buscarPessoa: (id) => requisitar("GET", `/api/pessoas/${id}`),
@@ -71,6 +73,7 @@ export const api = {
     removerPresente: (id) => requisitar("DELETE", `/api/presentes/${id}`),
 
     sugestoesDoCatalogo: (pessoaId) => requisitar("GET", `/api/pessoas/${pessoaId}/sugestoes`),
+    presentesDaPessoa: (pessoaId) => requisitar("GET", `/api/pessoas/${pessoaId}/presentes`),
     ideiasComIa: (pessoaId) => requisitar("POST", `/api/pessoas/${pessoaId}/ideias-ia`),
 
     listarFavoritos: (pessoaId) => requisitar("GET", `/api/favoritos${filtroPessoa(pessoaId)}`),

@@ -2,6 +2,7 @@ import { api } from "../api.js";
 import {
     bloco, botaoVoltar, cabecalhoPagina, campo, tags, valorMarcado, valoresMarcados,
 } from "../componentes/formulario.js";
+import { icones } from "../componentes/icones.js";
 import { listaDeOpcoes, valoresForaDasOpcoes } from "../opcoes.js";
 import {
     comBotaoOcupado, escaparHtml, listaParaTexto, mostrarAviso, mostrarErro, numeroOuNulo, textoParaLista,
@@ -23,9 +24,9 @@ const MODOS = {
     sugestoes: {
         titulo: () => "Conte mais sobre a pessoa",
         subtitulo: () => "Quanto mais informações você fornecer, mais precisas serão nossas sugestões.",
-        botao: "Encontrar presentes →",
+        botao: `Encontrar presentes ${icones.seta()}`,
         voltar: () => "#/inicio",
-        destino: (pessoa) => `#/pessoas/${pessoa.id}/sugestoes`,
+        destino: (pessoa) => `#/pessoas/${pessoa.id}`,
         aviso: "Pessoa cadastrada. Buscando sugestões...",
     },
     cadastrar: {
@@ -105,7 +106,7 @@ export async function telaFormularioPessoa(principal, { modo, id }) {
 
             <div class="acoes acoes--rodape">
                 <button type="submit" class="botao botao--grande">${config.botao}</button>
-                <a class="botao botao--contorno" href="${config.voltar(pessoa)}">${modo === "editar" ? "Cancelar" : "← Voltar"}</a>
+                <a class="botao botao--contorno" href="${config.voltar(pessoa)}">${modo === "editar" ? "Cancelar" : `${icones.voltar()} Voltar`}</a>
             </div>
         </form>`;
 

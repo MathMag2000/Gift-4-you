@@ -22,10 +22,15 @@ public class UsuarioValidador extends ValidadorBase {
      * (nome sem espaços nas pontas e e-mail em minúsculas). A senha não é alterada.
      */
     public DadosCadastroUsuario validarCadastro(DadosCadastroUsuario dados) {
-        String nome = validarNomePessoa(dados.nome(), "O nome é obrigatório.");
+        String nome = validarNome(dados.nome());
         String email = validarEmail(dados.email());
         validarSenha(dados.senha());
         return new DadosCadastroUsuario(nome, email, dados.senha());
+    }
+
+    /** Nome da conta, com as mesmas regras do cadastro. Devolve o nome normalizado. */
+    public String validarNome(String nome) {
+        return validarNomePessoa(nome, "O nome é obrigatório.");
     }
 
     public String validarEmail(String email) {
@@ -41,7 +46,8 @@ public class UsuarioValidador extends ValidadorBase {
         return email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
     }
 
-    private void validarSenha(String senha) {
+    /** Regras de senha usadas no cadastro e na troca de senha. */
+    public void validarSenha(String senha) {
         if (senha == null || senha.isEmpty()) {
             throw new ValidacaoException("A senha é obrigatória.");
         }

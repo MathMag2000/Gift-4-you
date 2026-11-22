@@ -51,6 +51,11 @@ ALTER TABLE presente ALTER COLUMN usuario_id SET NOT NULL;
 
 CREATE INDEX IF NOT EXISTS idx_presente_usuario ON presente (usuario_id);
 
+-- Presente cadastrado para uma pessoa específica (opcional). Se a pessoa for removida, o presente
+-- continua no catálogo, sem pessoa definida.
+ALTER TABLE presente ADD COLUMN IF NOT EXISTS pessoa_id INTEGER REFERENCES pessoa (id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_presente_pessoa ON presente (pessoa_id);
+
 -- Favoritos e histórico guardam uma cópia do item sugerido (ver ItemSugerido). Por isso presente_id
 -- não é chave estrangeira: o favorito continua existindo se o presente sair do catálogo.
 CREATE TABLE IF NOT EXISTS favorito (
@@ -69,16 +74,36 @@ CREATE TABLE IF NOT EXISTS favorito (
 
 CREATE INDEX IF NOT EXISTS idx_favorito_pessoa ON favorito (pessoa_id);
 
+-- Histórico das ideias geradas com IA. Pertence à conta e guarda o nome da pessoa: quando a pessoa é
+-- removida, o registro continua existindo com pessoa_id nulo.
 CREATE TABLE IF NOT EXISTS registro_historico (
     id               SERIAL PRIMARY KEY,
-    pessoa_id        INTEGER        NOT NULL REFERENCES pessoa (id) ON DELETE CASCADE,
+    usuario_id       INTEGER        NOT NULL REFERENCES usuario (id) ON DELETE CASCADE,
+    pessoa_id        INTEGER        REFERENCES pessoa (id) ON DELETE SET NULL,
+    pessoa_nome      TEXT           NOT NULL,
     origem           VARCHAR(20)    NOT NULL,
     ocasiao          VARCHAR(30)    NOT NULL,
     orcamento_maximo NUMERIC        NOT NULL,
     realizado_em     TIMESTAMP      NOT NULL
 );
 
+-- Bancos criados quando o histórico era apagado junto com a pessoa: recebem a conta e o nome da pessoa
+-- de cada registro, e a remoção da pessoa passa a apenas desvincular o registro.
+ALTER TABLE registro_historico ADD COLUMN IF NOT EXISTS usuario_id INTEGER REFERENCES usuario (id) ON DELETE CASCADE;
+ALTER TABLE registro_historico ADD COLUMN IF NOT EXISTS pessoa_nome TEXT;
+UPDATE registro_historico r SET usuario_id = p.usuario_id, pessoa_nome = p.nome
+    FROM pessoa p WHERE r.pessoa_id = p.id AND (r.usuario_id IS NULL OR r.pessoa_nome IS NULL);
+DELETE FROM registro_historico WHERE usuario_id IS NULL;
+ALTER TABLE registro_historico ALTER COLUMN usuario_id SET NOT NULL;
+UPDATE registro_historico SET pessoa_nome = '' WHERE pessoa_nome IS NULL;
+ALTER TABLE registro_historico ALTER COLUMN pessoa_nome SET NOT NULL;
+ALTER TABLE registro_historico ALTER COLUMN pessoa_id DROP NOT NULL;
+ALTER TABLE registro_historico DROP CONSTRAINT IF EXISTS registro_historico_pessoa_id_fkey;
+ALTER TABLE registro_historico ADD CONSTRAINT registro_historico_pessoa_id_fkey
+    FOREIGN KEY (pessoa_id) REFERENCES pessoa (id) ON DELETE SET NULL;
+
 CREATE INDEX IF NOT EXISTS idx_registro_historico_pessoa ON registro_historico (pessoa_id);
+CREATE INDEX IF NOT EXISTS idx_registro_historico_usuario ON registro_historico (usuario_id);
 
 CREATE TABLE IF NOT EXISTS item_historico (
     registro_id INTEGER        NOT NULL REFERENCES registro_historico (id) ON DELETE CASCADE,

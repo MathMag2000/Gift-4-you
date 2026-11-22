@@ -4,6 +4,7 @@ import com.gift4you.exception.FavoritoNaoEncontradoException;
 import com.gift4you.exception.PessoaNaoEncontradaException;
 import com.gift4you.exception.PresenteNaoEncontradoException;
 import com.gift4you.exception.RegistroHistoricoNaoEncontradoException;
+import com.gift4you.exception.ValidacaoException;
 import com.gift4you.model.Categoria;
 import com.gift4you.model.DadosFavorito;
 import com.gift4you.model.DadosPessoa;
@@ -108,8 +109,9 @@ class SeparacaoEntreContasTest {
 
     @Test
     void cadaContaVeSomenteOSeuHistorico() {
-        cenario.sugestoes.gerarSugestoes(USUARIO, ana.getId());
-        cenario.sugestoes.gerarSugestoes(OUTRO_USUARIO, bruno.getId());
+        cenario.ideiasDaIa.add(Cenario.ideia("Livro", "50"));
+        cenario.sugestoes.gerarIdeiasComIa(USUARIO, ana.getId());
+        cenario.sugestoes.gerarIdeiasComIa(OUTRO_USUARIO, bruno.getId());
         int registroDaAna = cenario.historico.listar(USUARIO, ana.getId()).getFirst().getId();
 
         assertThat(cenario.historico.listar(USUARIO, null)).singleElement()
@@ -147,6 +149,17 @@ class SeparacaoEntreContasTest {
                 .extracting(sugestao -> sugestao.presente().getNome()).containsExactly("Kit de café");
         assertThat(cenario.sugestoes.gerarSugestoes(OUTRO_USUARIO, bruno.getId()))
                 .extracting(sugestao -> sugestao.presente().getNome()).containsExactly("Cafeteira");
+    }
+
+    @Test
+    void naoCadastraPresenteParaPessoaDeOutraConta() {
+        DadosPresente paraBruno = new DadosPresente("Caneca", Categoria.CASA, "", BigDecimal.TEN, List.of(),
+                List.of(Ocasiao.NATAL), "https://loja.exemplo.com/caneca", bruno.getId());
+
+        assertThatThrownBy(() -> cenario.presentes.cadastrar(USUARIO, paraBruno))
+                .isInstanceOf(ValidacaoException.class)
+                .hasMessage("A pessoa escolhida para o presente não foi encontrada.");
+        assertThat(cenario.sugestoes.presentesDaPessoa(OUTRO_USUARIO, bruno.getId())).isEmpty();
     }
 
     @Test

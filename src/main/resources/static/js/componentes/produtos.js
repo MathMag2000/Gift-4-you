@@ -32,7 +32,7 @@ function cartao(entrada, indice, favoritos) {
         <article class="produto" data-indice="${indice}" tabindex="0" role="button"
                  aria-label="Ver detalhes de ${escaparHtml(item.nome)}">
             <div class="produto__topo">
-                ${origem === IA ? `<span class="selo">IA</span>` : "<span></span>"}
+                ${origem === IA ? `<span class="selo selo--ia">${icones.brilho(11)}IA</span>` : "<span></span>"}
                 ${favoritavel ? botaoCoracao(favoritado, 20, "coracao") : ""}
             </div>
             <div class="produto__imagem">${imagemProduto(item.imagemUrl, item.nome, "produto__foto")}</div>
@@ -93,6 +93,39 @@ export function renderizarProdutos(elemento, entradas, favoritos, { aoAlternarFa
     };
 }
 
+/**
+ * Copia o endereço do produto sem abrir a loja. Usa a área de transferência do navegador e, se ela não
+ * estiver disponível (ex.: site sem HTTPS), um campo de texto temporário.
+ */
+async function copiarLink(botao, link) {
+    let copiado = false;
+    try {
+        await navigator.clipboard.writeText(link);
+        copiado = true;
+    } catch {
+        const campo = document.createElement("textarea");
+        campo.value = link;
+        campo.setAttribute("readonly", "");
+        campo.className = "fora-da-tela";
+        document.body.append(campo);
+        campo.select();
+        copiado = document.execCommand("copy");
+        campo.remove();
+        botao.focus();
+    }
+    if (!copiado) {
+        mostrarAviso("Não foi possível copiar. Selecione o endereço e copie manualmente.", "erro");
+        return;
+    }
+    botao.classList.add("link-loja__copiar--copiado");
+    botao.innerHTML = `${icones.confirmado()}<span>Copiado</span>`;
+    mostrarAviso("Link copiado para a área de transferência.");
+    setTimeout(() => {
+        botao.classList.remove("link-loja__copiar--copiado");
+        botao.innerHTML = `${icones.copiar()}<span>Copiar</span>`;
+    }, 2000);
+}
+
 function abrirDetalhes(entrada, favoritos, redesenharCartoes, aoAlternarFavorito) {
     const { item, origem, pessoaId } = entrada;
     const favoritavel = pessoaId !== null && pessoaId !== undefined;
@@ -104,7 +137,7 @@ function abrirDetalhes(entrada, favoritos, redesenharCartoes, aoAlternarFavorito
         return `
             <div class="modal__cabecalho">
                 <span>Detalhes do produto</span>
-                <button type="button" class="modal__fechar" data-acao="fechar" aria-label="Fechar">✕</button>
+                <button type="button" class="modal__fechar" data-acao="fechar" aria-label="Fechar">${icones.fechar()}</button>
             </div>
             <div class="detalhe-produto">
                 <div class="detalhe-produto__imagem">${imagemProduto(item.imagemUrl, item.nome, "detalhe-produto__foto")}</div>
@@ -133,14 +166,18 @@ function abrirDetalhes(entrada, favoritos, redesenharCartoes, aoAlternarFavorito
                         </div>` : ""}
                     ${link ? `
                         <div class="detalhe-produto__secao">
-                            <p class="rotulo-secao">Loja</p>
-                            <a class="link-loja" href="${escaparHtml(link)}" target="_blank" rel="noopener noreferrer">
-                                <span>${escaparHtml(enderecoParaExibir(link))}</span>${icones.externo()}
-                            </a>
+                            <p class="rotulo-secao">Link do produto</p>
+                            <div class="link-loja">
+                                <span class="link-loja__endereco" title="${escaparHtml(link)}">${escaparHtml(enderecoParaExibir(link))}</span>
+                                <button type="button" class="link-loja__copiar" data-acao="copiar"
+                                        aria-label="Copiar link do produto" title="Copiar link">
+                                    ${icones.copiar()}<span>Copiar</span>
+                                </button>
+                            </div>
                         </div>` : ""}
                     <div class="acoes">
                         ${link ? `<a class="botao" href="${escaparHtml(link)}" target="_blank" rel="noopener noreferrer">
-                                      ${ehBusca ? "Buscar na loja →" : "Acessar loja →"}</a>` : ""}
+                                      ${ehBusca ? "Buscar na loja" : "Acessar loja"} ${icones.seta()}</a>` : ""}
                         ${favoritavel ? `
                             <button type="button" class="botao botao--contorno ${favoritado ? "botao--marcado" : ""}"
                                     data-acao="favoritar" aria-pressed="${favoritado}">
@@ -153,6 +190,11 @@ function abrirDetalhes(entrada, favoritos, redesenharCartoes, aoAlternarFavorito
 
     const modal = abrirModal(conteudo(), { classe: "modal--produto", rotulo: `Detalhes de ${item.nome}` });
     modal.caixa.addEventListener("click", async (evento) => {
+        const copiar = evento.target.closest('[data-acao="copiar"]');
+        if (copiar) {
+            await copiarLink(copiar, link);
+            return;
+        }
         const botao = evento.target.closest('[data-acao="favoritar"]');
         if (!botao) {
             return;

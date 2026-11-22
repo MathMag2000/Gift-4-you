@@ -41,6 +41,7 @@ class GeminiGeradorIdeiasTest {
     /** O que o servidor falso faz para cada modelo: responder com um código ou não responder ("travar"). */
     private final Map<String, Object> comportamento = new ConcurrentHashMap<>();
     private final List<String> modelosChamados = new CopyOnWriteArrayList<>();
+    private final List<String> corposRecebidos = new CopyOnWriteArrayList<>();
     private HttpServer servidor;
 
     @BeforeEach
@@ -59,6 +60,7 @@ class GeminiGeradorIdeiasTest {
     private void responder(HttpExchange troca) throws IOException {
         String modelo = troca.getRequestURI().getPath().replaceFirst("^/", "").replaceFirst(":generateContent$", "");
         modelosChamados.add(modelo);
+        corposRecebidos.add(new String(troca.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
         Object acao = comportamento.getOrDefault(modelo, 200);
         if ("travar".equals(acao)) {
             try {
@@ -93,6 +95,17 @@ class GeminiGeradorIdeiasTest {
 
         assertThat(ideias).extracting(IdeiaPresente::nome).containsExactly("Caneca");
         assertThat(modelosChamados).containsExactly(PRINCIPAL);
+    }
+
+    @Test
+    void pedeParaNaoRepetirAsIdeiasJaSugeridas() {
+        gerador().gerarIdeias(pessoa(), 6, List.of("Caneca de cerâmica", "Livro de receitas"));
+        gerador().gerarIdeias(pessoa(), 6);
+
+        assertThat(corposRecebidos.getFirst())
+                .contains("Não repita estas ideias")
+                .contains("Caneca de cerâmica; Livro de receitas");
+        assertThat(corposRecebidos.getLast()).contains("Não há ideias anteriores a evitar.");
     }
 
     @Test

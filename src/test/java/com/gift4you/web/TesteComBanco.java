@@ -38,7 +38,7 @@ abstract class TesteComBanco {
     protected MockMvc mvc;
 
     @Autowired
-    private JdbcClient jdbc;
+    protected JdbcClient jdbc;
 
     /** Evita acessar a internet: a página da loja é simulada. */
     @MockitoBean

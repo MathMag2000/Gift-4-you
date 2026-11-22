@@ -16,6 +16,8 @@ public class Presente implements Identificavel {
     private List<Ocasiao> ocasioes;
     private String linkCompra;
     private String imagemUrl;
+    /** Pessoa para quem o presente foi cadastrado; nulo para presentes gerais do catálogo. */
+    private Integer pessoaId;
 
     public Presente(int usuarioId, DadosPresente dados) {
         this.usuarioId = usuarioId;
@@ -30,6 +32,7 @@ public class Presente implements Identificavel {
         this.caracteristicas = List.copyOf(dados.caracteristicas());
         this.ocasioes = List.copyOf(dados.ocasioes());
         this.linkCompra = dados.linkCompra();
+        this.pessoaId = dados.pessoaId();
     }
 
     /**
@@ -87,6 +90,19 @@ public class Presente implements Identificavel {
 
     public String getImagemUrl() {
         return imagemUrl;
+    }
+
+    public Integer getPessoaId() {
+        return pessoaId;
+    }
+
+    public boolean cadastradoPara(int idPessoa) {
+        return pessoaId != null && pessoaId == idPessoa;
+    }
+
+    /** Chamado quando a pessoa é removida: o presente continua no catálogo, sem pessoa definida. */
+    public void desvincularPessoa() {
+        this.pessoaId = null;
     }
 
     @Override

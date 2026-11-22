@@ -47,6 +47,38 @@ class ApiContaTest extends TesteComBanco {
     }
 
     @Test
+    void alteraNomeESenhaDaContaLogada() throws Exception {
+        MockHttpSession sessao = cadastrarConta("Marcos", "marcos@exemplo.com");
+
+        mvc.perform(json(put("/api/conta/nome"), """
+                        {"nome":"Marcos Júnior"}"""))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(json(put("/api/conta/nome").session(sessao), """
+                        {"nome":"  Marcos   Júnior "}"""))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nome").value("Marcos Júnior"));
+        mvc.perform(get("/api/conta").session(sessao)).andExpect(jsonPath("$.nome").value("Marcos Júnior"));
+
+        mvc.perform(json(put("/api/conta/senha").session(sessao), """
+                        {"senhaAtual":"errada123","novaSenha":"novaSenha99"}"""))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensagem").value("A senha atual está incorreta."));
+        MvcResult troca = mvc.perform(json(put("/api/conta/senha").session(sessao), """
+                        {"senhaAtual":"senha1234","novaSenha":"novaSenha99"}"""))
+                .andExpect(status().isNoContent())
+                .andReturn();
+        MockHttpSession novaSessao = (MockHttpSession) troca.getRequest().getSession(false);
+        mvc.perform(get("/api/conta").session(novaSessao)).andExpect(status().isOk());
+
+        mvc.perform(json(post("/api/conta/login"), """
+                        {"email":"marcos@exemplo.com","senha":"senha1234"}"""))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(json(post("/api/conta/login"), """
+                        {"email":"marcos@exemplo.com","senha":"novaSenha99"}"""))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void recusaCadastroComDadosInvalidosOuEmailRepetido() throws Exception {
         cadastrarConta("Marcos", "marcos@exemplo.com");
 
