@@ -12,7 +12,6 @@ import org.springframework.transaction.support.TransactionOperations;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,25 +25,26 @@ import static com.gift4you.repository.ColunasSql.textos;
 
 /**
  * Cada registro fica na tabela registro_historico e os itens sugeridos nele, em item_historico.
+ * O registro pertence à conta (usuario_id); pessoa_id fica nulo quando a pessoa é removida.
  */
 public class HistoricoRepositoryJdbc implements HistoricoRepository {
 
     private static final String COLUNAS = """
-            SELECT id, pessoa_id, origem, ocasiao, orcamento_maximo, realizado_em
+            SELECT id, usuario_id, pessoa_id, pessoa_nome, origem, ocasiao, orcamento_maximo, realizado_em
             FROM registro_historico""";
 
     /** Registro lido do banco, ainda sem os itens, que vêm de outra consulta. */
-    private record LinhaRegistro(int id, int pessoaId, OrigemSugestao origem, Ocasiao ocasiao,
-                                 BigDecimal orcamentoMaximo, LocalDateTime realizadoEm) {
+    private record LinhaRegistro(int id, int usuarioId, Integer pessoaId, String pessoaNome, OrigemSugestao origem,
+                                 Ocasiao ocasiao, BigDecimal orcamentoMaximo, LocalDateTime realizadoEm) {
     }
 
     private record LinhaItem(int registroId, ItemSugerido item) {
     }
 
     private static final RowMapper<LinhaRegistro> MAPEADOR_REGISTRO = (rs, linha) -> new LinhaRegistro(
-            rs.getInt("id"), rs.getInt("pessoa_id"), lerEnum(rs, "origem", OrigemSugestao.class),
-            lerEnum(rs, "ocasiao", Ocasiao.class), rs.getBigDecimal("orcamento_maximo"),
-            rs.getObject("realizado_em", LocalDateTime.class));
+            rs.getInt("id"), rs.getInt("usuario_id"), lerInteiro(rs, "pessoa_id"), rs.getString("pessoa_nome"),
+            lerEnum(rs, "origem", OrigemSugestao.class), lerEnum(rs, "ocasiao", Ocasiao.class),
+            rs.getBigDecimal("orcamento_maximo"), rs.getObject("realizado_em", LocalDateTime.class));
 
     private static final RowMapper<LinhaItem> MAPEADOR_ITEM = (rs, linha) -> new LinhaItem(rs.getInt("registro_id"),
             new ItemSugerido(lerInteiro(rs, "presente_id"), rs.getString("nome"), rs.getString("categoria"),
@@ -64,10 +64,12 @@ public class HistoricoRepositoryJdbc implements HistoricoRepository {
     public RegistroHistorico salvar(RegistroHistorico registro) {
         return transacao.execute(status -> {
             int id = jdbc.sql("""
-                            INSERT INTO registro_historico (pessoa_id, origem, ocasiao, orcamento_maximo, realizado_em)
-                            VALUES (?, ?, ?, ?, ?)
+                            INSERT INTO registro_historico (usuario_id, pessoa_id, pessoa_nome, origem, ocasiao,
+                                                            orcamento_maximo, realizado_em)
+                            VALUES (?, ?, ?, ?, ?, ?, ?)
                             RETURNING id""")
-                    .params(registro.getPessoaId(), registro.getOrigem().name(), registro.getOcasiao().name(),
+                    .params(registro.getUsuarioId(), registro.getPessoaId(), registro.getPessoaNome(),
+                            registro.getOrigem().name(), registro.getOcasiao().name(),
                             registro.getOrcamento().maximo(), registro.getRealizadoEm())
                     .query(Integer.class)
                     .single();
@@ -105,17 +107,14 @@ public class HistoricoRepositoryJdbc implements HistoricoRepository {
     }
 
     @Override
-    public List<RegistroHistorico> listarPorPessoa(int pessoaId) {
-        return montar(jdbc.sql(COLUNAS + " WHERE pessoa_id = ? ORDER BY id").param(pessoaId)
+    public List<RegistroHistorico> listarPorUsuario(int usuarioId) {
+        return montar(jdbc.sql(COLUNAS + " WHERE usuario_id = ? ORDER BY id").param(usuarioId)
                 .query(MAPEADOR_REGISTRO).list());
     }
 
     @Override
-    public List<RegistroHistorico> listarPorPessoas(Collection<Integer> pessoaIds) {
-        if (pessoaIds.isEmpty()) {
-            return List.of();
-        }
-        return montar(jdbc.sql(COLUNAS + " WHERE pessoa_id = ANY (?) ORDER BY id").param(ids(pessoaIds))
+    public List<RegistroHistorico> listarPorPessoa(int pessoaId) {
+        return montar(jdbc.sql(COLUNAS + " WHERE pessoa_id = ? ORDER BY id").param(pessoaId)
                 .query(MAPEADOR_REGISTRO).list());
     }
 
@@ -125,9 +124,10 @@ public class HistoricoRepositoryJdbc implements HistoricoRepository {
         return jdbc.sql("DELETE FROM registro_historico WHERE id = ?").param(id).update() > 0;
     }
 
+    /** O banco já faz isso pelo ON DELETE SET NULL; fica explícito para não depender só do esquema. */
     @Override
-    public void removerPorPessoa(int pessoaId) {
-        jdbc.sql("DELETE FROM registro_historico WHERE pessoa_id = ?").param(pessoaId).update();
+    public void desvincularPessoa(int pessoaId) {
+        jdbc.sql("UPDATE registro_historico SET pessoa_id = NULL WHERE pessoa_id = ?").param(pessoaId).update();
     }
 
     /** Busca os itens de todos os registros numa só consulta, em vez de uma consulta por registro. */
@@ -148,9 +148,9 @@ public class HistoricoRepositoryJdbc implements HistoricoRepository {
                         .add(linha.item()));
 
         return linhas.stream().map(linha -> {
-            RegistroHistorico registro = new RegistroHistorico(linha.pessoaId(), linha.origem(), linha.ocasiao(),
-                    new FaixaOrcamento(linha.orcamentoMaximo()), itensPorRegistro.getOrDefault(linha.id(), List.of()),
-                    linha.realizadoEm());
+            RegistroHistorico registro = new RegistroHistorico(linha.usuarioId(), linha.pessoaId(), linha.pessoaNome(),
+                    linha.origem(), linha.ocasiao(), new FaixaOrcamento(linha.orcamentoMaximo()),
+                    itensPorRegistro.getOrDefault(linha.id(), List.of()), linha.realizadoEm());
             registro.setId(linha.id());
             return registro;
         }).toList();

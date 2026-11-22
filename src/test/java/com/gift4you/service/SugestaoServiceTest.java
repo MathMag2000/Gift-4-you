@@ -205,4 +205,52 @@ class SugestaoServiceTest {
                     .isInstanceOf(PessoaNaoEncontradaException.class);
         }
     }
+
+    @Nested
+    class PresentesCadastradosParaAPessoa {
+
+        private Presente presentePara(Pessoa pessoa, String nome, String preco, List<String> caracteristicas) {
+            return cenario.presentes.cadastrar(USUARIO, new DadosPresente(nome, Categoria.OUTRA, "",
+                    new BigDecimal(preco), caracteristicas, List.of(Ocasiao.NATAL), Cenario.linkDe(nome), pessoa.getId()));
+        }
+
+        @Test
+        void mostraOsPresentesDaPessoaMesmoForaDoOrcamentoOuSemAfinidade() {
+            Pessoa ana = pessoa("100", Ocasiao.ANIVERSARIO, List.of("café"), List.of());
+            presentePara(ana, "Relógio", "900", List.of());
+            presentePara(ana, "Caneca", "40", List.of("café"));
+
+            assertThat(cenario.sugestoes.presentesDaPessoa(USUARIO, ana.getId()))
+                    .extracting(sugestao -> sugestao.presente().getNome()).containsExactly("Relógio", "Caneca");
+        }
+
+        @Test
+        void presentesDeOutraPessoaNaoAparecemComoDela() {
+            Pessoa ana = pessoa("500", Ocasiao.NATAL, List.of("café"), List.of());
+            Pessoa bia = pessoa("500", Ocasiao.NATAL, List.of("café"), List.of());
+            presentePara(bia, "Caneca", "40", List.of("café"));
+
+            assertThat(cenario.sugestoes.presentesDaPessoa(USUARIO, ana.getId())).isEmpty();
+            assertThat(nomesSugeridos(ana)).as("continua valendo como sugestão do catálogo").containsExactly("Caneca");
+        }
+
+        @Test
+        void presentesDaPessoaNaoSeRepetemNasSugestoesDoCatalogo() {
+            Pessoa ana = pessoa("500", Ocasiao.NATAL, List.of("café"), List.of());
+            presentePara(ana, "Caneca", "40", List.of("café"));
+            presente("Moedor", Categoria.CASA, "80", List.of("café"), Ocasiao.NATAL);
+
+            assertThat(nomesSugeridos(ana)).containsExactly("Moedor");
+        }
+
+        @Test
+        void removerAPessoaMantemOPresenteNoCatalogoSemPessoa() {
+            Pessoa ana = pessoa("500", Ocasiao.NATAL, List.of("café"), List.of());
+            Presente caneca = presentePara(ana, "Caneca", "40", List.of("café"));
+
+            cenario.pessoas.remover(USUARIO, ana.getId());
+
+            assertThat(cenario.presentes.buscarPorId(USUARIO, caneca.getId()).getPessoaId()).isNull();
+        }
+    }
 }

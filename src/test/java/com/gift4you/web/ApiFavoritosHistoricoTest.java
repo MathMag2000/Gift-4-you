@@ -65,15 +65,7 @@ class ApiFavoritosHistoricoTest extends TesteComBanco {
 
         mvc.perform(get("/api/historico").session(sessao).param("pessoaId", "1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].origem").value("CATALOGO"))
-                .andExpect(jsonPath("$[0].ocasiao").value("ANIVERSARIO"))
-                .andExpect(jsonPath("$[0].orcamento.maximo").value(200))
-                .andExpect(jsonPath("$[0].itens[0].nome").value("Kit de café"))
-                .andExpect(jsonPath("$[0].itens[0].categoria").value("Gastronomia"))
-                .andExpect(jsonPath("$[0].itens[0].motivos", hasSize(2)))
-                .andExpect(jsonPath("$[0].itens[0].linkCompra").value("https://loja.exemplo.com/kit-cafe"))
-                .andExpect(jsonPath("$[0].itens[0].imagemUrl").value("https://img.exemplo.com/kit-cafe.jpg"))
-                .andExpect(jsonPath("$[0].realizadoEm").isString());
+                .andExpect(jsonPath("$", hasSize(0)));
 
         mvc.perform(post("/api/favoritos").session(sessao).contentType(MediaType.APPLICATION_JSON).content("""
                         {"pessoaId":1,"origem":"CATALOGO","item":{"presenteId":1,"motivos":["combina"]}}"""))
@@ -101,19 +93,80 @@ class ApiFavoritosHistoricoTest extends TesteComBanco {
         mvc.perform(get("/api/opcoes")).andExpect(jsonPath("$.origens[1].descricao").value("IA"));
     }
 
+    /**
+     * Grava no banco um registro de ideias da IA para a pessoa 1, como o SugestaoService faz depois de uma
+     * geração concluída (os testes não acessam a IA de verdade).
+     */
+    private void registrarIdeiasDaIa(String pessoaNome) {
+        int registro = jdbc.sql("""
+                        INSERT INTO registro_historico (usuario_id, pessoa_id, pessoa_nome, origem, ocasiao,
+                                                        orcamento_maximo, realizado_em)
+                        VALUES (1, 1, ?, 'IA', 'NATAL', 100, '2026-10-08 12:00:00') RETURNING id""")
+                .param(pessoaNome).query(Integer.class).single();
+        jdbc.sql("""
+                        INSERT INTO item_historico (registro_id, posicao, nome, categoria, preco, link_compra)
+                        VALUES (?, 0, 'Caneca de cerâmica', 'Casa', 40, 'https://www.amazon.com.br/s?k=caneca')""")
+                .param(registro).update();
+    }
+
     @Test
-    void removerPessoaApagaOsFavoritosEOHistoricoDelaNoBanco() throws Exception {
+    void removerPessoaApagaOsFavoritosMasMantemOHistoricoIndicandoAExclusao() throws Exception {
         enviar("/api/pessoas", """
                 {"nome":"Ana","idade":30,"vinculo":"AMIGO","gostos":[],"naoGosta":[],
                  "ocasiao":"NATAL","orcamento":{"maximo":100}}""");
-        mvc.perform(get("/api/pessoas/1/sugestoes").session(sessao)).andExpect(status().isOk());
+        registrarIdeiasDaIa("Ana");
         mvc.perform(post("/api/favoritos").session(sessao).contentType(MediaType.APPLICATION_JSON).content("""
                         {"pessoaId":1,"origem":"IA","item":{"nome":"Caneca","preco":40}}"""))
                 .andExpect(status().isCreated());
+        mvc.perform(get("/api/historico").session(sessao).param("pessoaId", "1"))
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].pessoaId").value(1))
+                .andExpect(jsonPath("$[0].pessoaRemovida").value(false));
 
         mvc.perform(delete("/api/pessoas/1").session(sessao)).andExpect(status().isNoContent());
 
-        mvc.perform(get("/api/historico").session(sessao)).andExpect(jsonPath("$", hasSize(0)));
+        mvc.perform(get("/api/historico").session(sessao))
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].pessoaId").doesNotExist())
+                .andExpect(jsonPath("$[0].pessoaNome").value("Ana"))
+                .andExpect(jsonPath("$[0].pessoaRemovida").value(true))
+                .andExpect(jsonPath("$[0].origem").value("IA"))
+                .andExpect(jsonPath("$[0].itens[0].nome").value("Caneca de cerâmica"));
+        mvc.perform(get("/api/historico/1").session(sessao)).andExpect(jsonPath("$.pessoaNome").value("Ana"));
         mvc.perform(get("/api/favoritos").session(sessao)).andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    @Test
+    void historicoDeOutraContaNaoAparece() throws Exception {
+        enviar("/api/pessoas", """
+                {"nome":"Ana","idade":30,"vinculo":"AMIGO","gostos":[],"naoGosta":[],
+                 "ocasiao":"NATAL","orcamento":{"maximo":100}}""");
+        registrarIdeiasDaIa("Ana");
+        MockHttpSession outra = cadastrarConta("Bia", "bia@exemplo.com");
+
+        mvc.perform(get("/api/historico").session(outra)).andExpect(jsonPath("$", hasSize(0)));
+        mvc.perform(get("/api/historico/1").session(outra)).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void presenteCadastradoParaAPessoaApareceSoNaListaDela() throws Exception {
+        enviar("/api/pessoas", """
+                {"nome":"Ana","idade":30,"vinculo":"AMIGO","gostos":["café"],"naoGosta":[],
+                 "ocasiao":"NATAL","orcamento":{"maximo":100}}""");
+        enviar("/api/presentes", """
+                {"nome":"Relógio","categoria":"MODA","preco":900,"ocasioes":["NATAL"],
+                 "linkCompra":"https://loja.exemplo.com/relogio","pessoaId":1}""");
+
+        mvc.perform(get("/api/presentes/1").session(sessao)).andExpect(jsonPath("$.pessoaId").value(1));
+        mvc.perform(get("/api/pessoas/1/presentes").session(sessao))
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].presente.nome").value("Relógio"));
+        mvc.perform(get("/api/pessoas/1/sugestoes").session(sessao)).andExpect(jsonPath("$", hasSize(0)));
+        mvc.perform(get("/api/historico").session(sessao)).andExpect(jsonPath("$", hasSize(0)));
+
+        mvc.perform(delete("/api/pessoas/1").session(sessao)).andExpect(status().isNoContent());
+        mvc.perform(get("/api/presentes/1").session(sessao))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pessoaId").doesNotExist());
     }
 }

@@ -2,6 +2,7 @@ package com.gift4you.web;
 
 import com.gift4you.exception.NaoAutenticadoException;
 import com.gift4you.exception.RegistroNaoEncontradoException;
+import com.gift4you.model.DadosAlteracaoSenha;
 import com.gift4you.model.DadosCadastroUsuario;
 import com.gift4you.model.DadosLogin;
 import com.gift4you.model.Usuario;
@@ -10,13 +11,15 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Cadastro, login e logout. São as únicas rotas da API, além das opções, acessíveis sem login.
+ * Cadastro, login, logout e alterações da conta. Cadastro, login e logout são as únicas rotas da API,
+ * além das opções, acessíveis sem login.
  */
 @RestController
 @RequestMapping("/api/conta")
@@ -69,5 +72,22 @@ public class ContaController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void sair(HttpServletRequest requisicao) {
         SessaoUsuario.sair(requisicao);
+    }
+
+    public record NovoNome(String nome) {
+    }
+
+    /** Exige login pelo parâmetro {@link UsuarioLogado}, mesmo estando fora do interceptor de login. */
+    @PutMapping("/nome")
+    public Conta alterarNome(UsuarioLogado usuario, @RequestBody NovoNome dados) {
+        return Conta.de(usuarioService.alterarNome(usuario.id(), dados == null ? null : dados.nome()));
+    }
+
+    /** Depois da troca, a sessão ganha um identificador novo, como no login. */
+    @PutMapping("/senha")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void alterarSenha(UsuarioLogado usuario, @RequestBody DadosAlteracaoSenha dados,
+                             HttpServletRequest requisicao) {
+        SessaoUsuario.entrar(requisicao, usuarioService.alterarSenha(usuario.id(), dados));
     }
 }

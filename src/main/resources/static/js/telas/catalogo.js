@@ -1,6 +1,6 @@
 import { api } from "../api.js";
 import {
-    bloco, botaoVoltar, cabecalhoPagina, campo, tags, valoresMarcados, vazio,
+    bloco, botaoVoltar, cabecalhoPagina, campo, nomeDaPessoa, tags, valoresMarcados, vazio,
 } from "../componentes/formulario.js";
 import { icones } from "../componentes/icones.js";
 import { confirmar } from "../componentes/modal.js";
@@ -11,7 +11,7 @@ import {
 } from "../util.js";
 
 export async function telaCatalogo(principal) {
-    const presentes = await api.listarPresentes();
+    const [presentes, pessoas] = await Promise.all([api.listarPresentes(), api.listarPessoas()]);
     const lista = presentes.length === 0
         ? vazio(icones.presente(32), "Nenhum presente no catálogo ainda.<br>Os presentes cadastrados aqui entram nas sugestões.")
         : `<div class="lista">${presentes.map((presente) => {
@@ -22,7 +22,9 @@ export async function telaCatalogo(principal) {
                 <div class="linha-presente__info">
                     <div class="linha-presente__topo">
                         <div>
-                            <h2 class="linha-presente__nome">${escaparHtml(presente.nome)}</h2>
+                            <h2 class="linha-presente__nome">${escaparHtml(presente.nome)}
+                                ${presente.pessoaId ? `<a class="selo" href="#/pessoas/${presente.pessoaId}">Para
+                                    ${escaparHtml(nomeDaPessoa(pessoas, presente.pessoaId))}</a>` : ""}</h2>
                             <p class="linha-presente__dados">${escaparHtml(descricao("categorias", presente.categoria))}
                                 · ${escaparHtml(presente.ocasioes.map((o) => descricao("ocasioes", o)).join(", "))}</p>
                         </div>
@@ -43,7 +45,7 @@ export async function telaCatalogo(principal) {
     principal.innerHTML = `
         ${cabecalhoPagina("Catálogo de presentes",
             "Seus presentes cadastrados. Eles são usados nas sugestões do catálogo e só você os vê.",
-            `<a class="botao" href="#/catalogo/novo">+ Cadastrar presente</a>`)}
+            `<a class="botao" href="#/catalogo/novo">${icones.mais()} Cadastrar presente</a>`)}
         ${lista}`;
 
     principal.addEventListener("click", async (evento) => {
@@ -72,14 +74,24 @@ export async function telaCatalogo(principal) {
 
 const PRESENTE_VAZIO = {
     nome: "", categoria: null, descricao: "", preco: "", caracteristicas: [], ocasioes: [], linkCompra: "",
+    pessoaId: null,
 };
 
-export async function telaFormularioPresente(principal, { id }) {
+/**
+ * @param pessoaInicial pessoa já escolhida ao chegar pela página dela ("Cadastrar presente");
+ *        depois de salvar, volta para a página da pessoa.
+ */
+export async function telaFormularioPresente(principal, { id, pessoaInicial }) {
     const editando = id !== undefined;
-    const presente = editando ? await api.buscarPresente(id) : PRESENTE_VAZIO;
+    const [presente, pessoas] = await Promise.all([
+        editando ? api.buscarPresente(id) : PRESENTE_VAZIO, api.listarPessoas()]);
+    const pessoaEscolhida = String(editando ? (presente.pessoaId ?? "") : (pessoaInicial ?? ""));
+    const voltar = !editando && pessoaInicial ? `#/pessoas/${pessoaInicial}` : "#/catalogo";
+    const opcoesPessoas = pessoas.map((pessoa) => `<option value="${pessoa.id}"
+        ${String(pessoa.id) === pessoaEscolhida ? "selected" : ""}>${escaparHtml(pessoa.nome)}</option>`).join("");
 
     principal.innerHTML = `
-        ${botaoVoltar("#/catalogo", "Catálogo")}
+        ${botaoVoltar(voltar, voltar === "#/catalogo" ? "Catálogo" : "Voltar para a pessoa")}
         ${cabecalhoPagina(editando ? "Editar presente" : "Cadastrar presente",
             "A foto do produto é buscada automaticamente na página do link de compra.")}
         <form class="formulario-largo" novalidate>
@@ -95,7 +107,11 @@ export async function telaFormularioPresente(principal, { id }) {
                     ${tags("categoria", listaDeOpcoes("categorias"), [presente.categoria], { tipo: "radio", rotulo: "Categoria" })}
                 </div>
                 ${campo("Descrição <small>opcional</small>",
-                    `<textarea name="descricao" rows="2">${escaparHtml(presente.descricao)}</textarea>`)}`)}
+                    `<textarea name="descricao" rows="2">${escaparHtml(presente.descricao)}</textarea>`)}
+                ${campo("Para quem é <small>opcional</small>",
+                    `<select name="pessoaId"><option value="">Nenhuma pessoa específica</option>${opcoesPessoas}</select>`,
+                    "campo--pessoa")}
+                <p class="bloco__ajuda">Presentes com uma pessoa escolhida aparecem na página dela.</p>`)}
 
             ${bloco("Loja", `
                 ${campo("Link para compra", `<input name="linkCompra" type="url" autocomplete="off"
@@ -112,7 +128,7 @@ export async function telaFormularioPresente(principal, { id }) {
 
             <div class="acoes acoes--rodape">
                 <button type="submit" class="botao botao--grande">${editando ? "Salvar alterações" : "Cadastrar presente"}</button>
-                <a class="botao botao--contorno" href="#/catalogo">Cancelar</a>
+                <a class="botao botao--contorno" href="${voltar}">Cancelar</a>
             </div>
         </form>`;
 
@@ -128,6 +144,7 @@ export async function telaFormularioPresente(principal, { id }) {
             caracteristicas: textoParaLista(campos.caracteristicas.value),
             ocasioes: valoresMarcados(formulario, "ocasioes"),
             linkCompra: campos.linkCompra.value,
+            pessoaId: campos.pessoaId.value ? Number(campos.pessoaId.value) : null,
         };
         if (Number.isNaN(dados.preco)) {
             mostrarAviso("Informe o preço como um valor, por exemplo 150,00.", "erro");
@@ -140,7 +157,7 @@ export async function telaFormularioPresente(principal, { id }) {
                 : api.cadastrarPresente(dados));
             const acao = editando ? "Presente alterado" : "Presente cadastrado";
             mostrarAviso(salvo.imagemUrl ? `${acao}.` : `${acao}, mas a loja não permitiu ler a foto do produto.`);
-            location.hash = "#/catalogo";
+            location.hash = voltar;
         } catch (erro) {
             mostrarErro(erro);
         }

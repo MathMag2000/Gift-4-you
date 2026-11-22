@@ -11,9 +11,14 @@ import com.gift4you.model.ResultadoIdeias;
 import com.gift4you.model.SugestaoPresente;
 
 import java.math.BigDecimal;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -51,10 +56,15 @@ public class SugestaoService {
         this.limiteIa = limiteIa;
     }
 
-    /** Gera as sugestões do catálogo e as registra no histórico. */
+    /**
+     * Sugestões do catálogo para a pessoa. Os presentes cadastrados para ela própria ficam de fora, pois
+     * aparecem em {@link #presentesDaPessoa}. Consultar sugestões não gera registro no histórico, que guarda
+     * somente as ideias geradas com IA.
+     */
     public List<SugestaoPresente> gerarSugestoes(int usuarioId, int pessoaId) {
         Pessoa pessoa = pessoaService.buscarPorId(usuarioId, pessoaId);
-        List<SugestaoPresente> sugestoes = presenteService.listar(usuarioId).stream()
+        return presenteService.listar(usuarioId).stream()
+                .filter(presente -> !presente.cadastradoPara(pessoaId))
                 .filter(presente -> dentroDoOrcamento(presente.getPreco(), pessoa.getOrcamento()))
                 .filter(presente -> !rejeitado(pessoa, textosDoPresente(presente)))
                 .map(presente -> avaliar(pessoa, presente))
@@ -63,17 +73,28 @@ public class SugestaoService {
                         .thenComparing(sugestao -> sugestao.presente().getPreco()))
                 .limit(LIMITE_SUGESTOES)
                 .toList();
-        historicoService.registrar(pessoa, OrigemSugestao.CATALOGO,
-                sugestoes.stream().map(ItemSugerido::de).toList());
-        return sugestoes;
+    }
+
+    /**
+     * Presentes que o usuário cadastrou para a pessoa. Aparecem sempre, mesmo fora do orçamento ou sem
+     * afinidade, pois foram escolhidos para ela; a avaliação só serve para explicar os motivos.
+     */
+    public List<SugestaoPresente> presentesDaPessoa(int usuarioId, int pessoaId) {
+        Pessoa pessoa = pessoaService.buscarPorId(usuarioId, pessoaId);
+        return presenteService.listarDaPessoa(usuarioId, pessoaId).stream()
+                .map(presente -> avaliar(pessoa, presente))
+                .toList();
     }
 
     /**
      * Pede ideias à IA e aplica as mesmas regras de orçamento e rejeição do catálogo,
      * pois o modelo nem sempre respeita as restrições pedidas. Cada ideia aprovada é procurada na loja
-     * para ganhar o link da página do produto, e o resultado vai para o histórico.
+     * para ganhar o link da página do produto. Uma geração concluída com ao menos uma ideia vai para o
+     * histórico; se a IA falhar, nada é registrado.
      * Cada conta pode fazer um número limitado de pedidos por hora; pedidos que falham também contam,
      * pois chegam à IA do mesmo jeito.
+     * Ideias já sugeridas antes para a pessoa (pelo histórico) não se repetem: a IA recebe a lista delas
+     * e, como nem sempre a respeita, as repetidas são descartadas pelo nome e pelo produto encontrado.
      */
     public ResultadoIdeias gerarIdeiasComIa(int usuarioId, int pessoaId) {
         Pessoa pessoa = pessoaService.buscarPorId(usuarioId, pessoaId);
@@ -83,14 +104,64 @@ public class SugestaoService {
                     + " pedidos de ideias com IA por hora. Tente novamente em "
                     + LimiteDeTaxa.emMinutos(limiteIa.tempoParaLiberar(chave)) + ".", limiteIa.tempoParaLiberar(chave));
         }
-        List<IdeiaPresente> recebidas = geradorIdeias.gerarIdeias(pessoa, QUANTIDADE_IDEIAS_IA);
+        IdeiasAnteriores anteriores = ideiasAnteriores(usuarioId, pessoaId);
+        List<IdeiaPresente> recebidas = geradorIdeias.gerarIdeias(pessoa, QUANTIDADE_IDEIAS_IA, anteriores.nomes());
         List<IdeiaPresente> aprovadas = recebidas.stream()
                 .filter(ideia -> dentroDoOrcamento(ideia.precoEstimado(), pessoa.getOrcamento()))
                 .filter(ideia -> !rejeitado(pessoa, List.of(ideia.nome(), ideia.categoria())))
                 .toList();
-        List<IdeiaPresente> naLoja = procurarNaLoja(pessoa, aprovadas);
-        historicoService.registrar(pessoa, OrigemSugestao.IA, naLoja.stream().map(ItemSugerido::de).toList());
-        return new ResultadoIdeias(naLoja, recebidas.size() - aprovadas.size());
+        List<IdeiaPresente> ineditas = semRepeticoes(aprovadas, anteriores);
+        List<IdeiaPresente> naLoja = semRepeticoes(procurarNaLoja(pessoa, ineditas), anteriores);
+        if (!naLoja.isEmpty()) {
+            historicoService.registrar(pessoa, OrigemSugestao.IA, naLoja.stream().map(ItemSugerido::de).toList());
+        }
+        return new ResultadoIdeias(naLoja, recebidas.size() - aprovadas.size(), aprovadas.size() - naLoja.size());
+    }
+
+    /**
+     * Ideias já sugeridas para a pessoa: os nomes como foram exibidos (os mais recentes primeiro, para a IA)
+     * e, para comparar, os nomes normalizados e os links de compra.
+     */
+    private record IdeiasAnteriores(List<String> nomes, Set<String> nomesNormalizados, Set<String> links) {
+    }
+
+    private IdeiasAnteriores ideiasAnteriores(int usuarioId, int pessoaId) {
+        Set<String> nomes = new LinkedHashSet<>();
+        Set<String> normalizados = new HashSet<>();
+        Set<String> links = new HashSet<>();
+        historicoService.listar(usuarioId, pessoaId).stream()
+                .flatMap(registro -> registro.getItens().stream())
+                .forEach(item -> {
+                    if (normalizados.add(normalizarNome(item.nome()))) {
+                        nomes.add(item.nome());
+                    }
+                    if (item.linkCompra() != null) {
+                        links.add(item.linkCompra());
+                    }
+                });
+        return new IdeiasAnteriores(List.copyOf(nomes), normalizados, links);
+    }
+
+    /** Remove as ideias já sugeridas antes e as repetidas dentro da própria lista (mesmo nome ou produto). */
+    private List<IdeiaPresente> semRepeticoes(List<IdeiaPresente> ideias, IdeiasAnteriores anteriores) {
+        Set<String> nomesVistos = new HashSet<>(anteriores.nomesNormalizados());
+        Set<String> linksVistos = new HashSet<>(anteriores.links());
+        List<IdeiaPresente> ineditas = new ArrayList<>();
+        for (IdeiaPresente ideia : ideias) {
+            boolean nomeNovo = nomesVistos.add(normalizarNome(ideia.nome()));
+            boolean linkNovo = ideia.linkCompra() == null || linksVistos.add(ideia.linkCompra());
+            if (nomeNovo && linkNovo) {
+                ineditas.add(ideia);
+            }
+        }
+        return ineditas;
+    }
+
+    /** "Caneca  de Cerâmica!" e "caneca de ceramica" contam como a mesma ideia. */
+    private static String normalizarNome(String nome) {
+        String semAcentos = Normalizer.normalize(nome == null ? "" : nome, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "");
+        return semAcentos.toLowerCase(Locale.ROOT).replaceAll("[^\\p{L}\\p{N}]+", " ").trim();
     }
 
     /** Procura as ideias ao mesmo tempo, para que o tempo total seja o da busca mais lenta, e não a soma. */

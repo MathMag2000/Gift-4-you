@@ -37,6 +37,8 @@ public class GeminiGeradorIdeias implements GeradorIdeias {
      * 503; esgotado o tempo, tenta o modelo reserva. Com dois modelos, a espera total fica abaixo de 90 s.
      */
     private static final Duration TEMPO_LIMITE_PADRAO = Duration.ofSeconds(45);
+    /** Ideias anteriores enviadas no pedido; as mais antigas além disso ainda são filtradas pelo sistema. */
+    private static final int MAXIMO_IDEIAS_ANTERIORES_NO_PROMPT = 60;
 
     /** O modelo não respondeu a tempo; tratado como sobrecarga, passando ao próximo modelo. */
     private static final class TempoEsgotado extends RuntimeException {
@@ -81,7 +83,12 @@ public class GeminiGeradorIdeias implements GeradorIdeias {
      */
     @Override
     public List<IdeiaPresente> gerarIdeias(Pessoa pessoa, int quantidade) {
-        String corpo = montarCorpo(montarPrompt(pessoa, quantidade));
+        return gerarIdeias(pessoa, quantidade, List.of());
+    }
+
+    @Override
+    public List<IdeiaPresente> gerarIdeias(Pessoa pessoa, int quantidade, List<String> jaSugeridas) {
+        String corpo = montarCorpo(montarPrompt(pessoa, quantidade, jaSugeridas));
         HttpResponse<String> resposta = null;
         for (String modelo : modelos) {
             try {
@@ -106,7 +113,23 @@ public class GeminiGeradorIdeias implements GeradorIdeias {
         return converterIdeias(extrairTexto(resposta.body()));
     }
 
-    private String montarPrompt(Pessoa pessoa, int quantidade) {
+    /**
+     * Lista, para o prompt, as ideias já sugeridas (as mais recentes primeiro), com tamanho limitado para
+     * não deixar o pedido grande demais.
+     */
+    private String evitarRepeticoes(List<String> jaSugeridas) {
+        if (jaSugeridas.isEmpty()) {
+            return "Não há ideias anteriores a evitar.";
+        }
+        List<String> nomes = jaSugeridas.stream()
+                .limit(MAXIMO_IDEIAS_ANTERIORES_NO_PROMPT)
+                .map(nome -> nome.length() > 80 ? nome.substring(0, 80) : nome)
+                .toList();
+        return "Não repita estas ideias, que já foram sugeridas antes, nem produtos equivalentes a elas: "
+                + String.join("; ", nomes) + ".";
+    }
+
+    private String montarPrompt(Pessoa pessoa, int quantidade, List<String> jaSugeridas) {
         return """
                 Você sugere presentes para pessoas no Brasil.
                 Sugira %d ideias de presentes diferentes para a pessoa descrita abaixo.
@@ -114,6 +137,7 @@ public class GeminiGeradorIdeias implements GeradorIdeias {
                 Regras:
                 - O preço estimado, em reais, deve ser de no máximo %s.
                 - O nome deve ser o de um produto específico, fácil de encontrar numa loja online.
+                - %s
                 - %s
                 - O presente deve ser adequado para a ocasião e para o vínculo.
                 - Priorize os gostos e interesses informados.
@@ -130,6 +154,7 @@ public class GeminiGeradorIdeias implements GeradorIdeias {
                 pessoa.getOrcamento().maximo().toPlainString(),
                 pessoa.getNaoGosta().isEmpty() ? "Não há itens a evitar."
                         : "Não sugira nada relacionado a: " + String.join(", ", pessoa.getNaoGosta()) + ".",
+                evitarRepeticoes(jaSugeridas),
                 pessoa.getIdade(), pessoa.getVinculo(),
                 listaOuNenhum(pessoa.getGostos()), listaOuNenhum(pessoa.getEstilos()), pessoa.getOcasiao(),
                 pessoa.getObservacoes().isBlank() ? "nenhuma" : pessoa.getObservacoes());

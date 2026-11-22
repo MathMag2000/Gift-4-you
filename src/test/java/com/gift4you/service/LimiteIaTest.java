@@ -27,7 +27,8 @@ class LimiteIaTest {
                 if (iaFalha) {
                     throw new IntegracaoIaException("IA fora do ar.");
                 }
-                return List.of(Cenario.ideia("Caneca", "40"));
+                // Uma ideia diferente a cada pedido, pois ideias já sugeridas para a pessoa não se repetem.
+                return List.of(Cenario.ideia("Caneca " + chamadasAIa, "40"));
             }, cenario.historico, cenario.loja, new LimiteDeTaxa(2, Duration.ofHours(1), relogio));
 
     @Test

@@ -48,7 +48,7 @@ class Cenario {
             link -> {
                 linksConsultados.add(link);
                 return link.contains("sem-imagem") ? Optional.empty() : Optional.of(link + "/foto.jpg");
-            });
+            }, pessoas);
     final HistoricoService historico = new HistoricoService(new HistoricoRepositoryEmMemoria(), pessoas, relogio);
     /** Resultados que a loja falsa "encontra", pelo nome da ideia. Nomes ausentes simulam produto não encontrado. */
     final Map<String, List<ProdutoLoja>> produtosNaLoja = new HashMap<>();
@@ -69,6 +69,7 @@ class Cenario {
     Cenario() {
         pessoas.adicionarOuvinteRemocao(historico);
         pessoas.adicionarOuvinteRemocao(favoritos);
+        pessoas.adicionarOuvinteRemocao(presentes);
     }
 
     Pessoa cadastrarPessoa(String nome, List<String> gostos, List<String> naoGosta) {
