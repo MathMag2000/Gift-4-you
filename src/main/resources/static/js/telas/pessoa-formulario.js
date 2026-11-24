@@ -26,7 +26,8 @@ const MODOS = {
         subtitulo: () => "Quanto mais informações você fornecer, mais precisas serão nossas sugestões.",
         botao: `Encontrar presentes ${icones.seta()}`,
         voltar: () => "#/inicio",
-        destino: (pessoa) => `#/pessoas/${pessoa.id}`,
+        // "?gerar=1": a página da pessoa já começa a buscar sugestões com IA, sem o usuário precisar clicar.
+        destino: (pessoa) => `#/pessoas/${pessoa.id}?gerar=1`,
         aviso: "Pessoa cadastrada. Buscando sugestões...",
     },
     cadastrar: {
@@ -34,8 +35,8 @@ const MODOS = {
         subtitulo: () => "Quanto mais informações você fornecer, mais precisas serão nossas sugestões.",
         botao: "Salvar pessoa",
         voltar: () => "#/pessoas",
-        destino: (pessoa) => `#/pessoas/${pessoa.id}`,
-        aviso: "Pessoa cadastrada.",
+        destino: (pessoa) => `#/pessoas/${pessoa.id}?gerar=1`,
+        aviso: "Pessoa cadastrada. Buscando sugestões...",
     },
     editar: {
         titulo: () => "Editar pessoa",

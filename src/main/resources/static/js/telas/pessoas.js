@@ -55,8 +55,11 @@ function temPoucasInformacoes(pessoa) {
  * Página da pessoa: dados cadastrados, presentes cadastrados para ela, presentes do catálogo que combinam
  * com o perfil e as últimas ideias geradas com IA. Abrir a página não gera registro no histórico; só uma
  * nova geração de ideias com IA gera.
+ *
+ * @param gerarAutomaticamente logo depois do cadastro, já busca sugestões com IA, para o usuário não chegar a
+ *        uma página sem sugestões; depois ele pode gerar mais pelo botão
  */
-export async function telaDetalhesPessoa(principal, { id }) {
+export async function telaDetalhesPessoa(principal, { id, gerarAutomaticamente = false }) {
     const pessoa = await api.buscarPessoa(id);
     const nome = escaparHtml(pessoa.nome);
     principal.innerHTML = `
@@ -134,7 +137,7 @@ export async function telaDetalhesPessoa(principal, { id }) {
             `<p class="nota">Preços com ≈ são estimados pela IA; confira antes de comprar.</p>`);
         dataIa.textContent = realizadoEm ? `Últimas ideias geradas em ${formatarDataHora(realizadoEm)}.` : "";
         dataIa.hidden = !realizadoEm;
-        botaoIa.innerHTML = `${icones.brilho(16)} Gerar novas ideias`;
+        botaoIa.innerHTML = `${icones.brilho(16)} Gerar mais sugestões`;
     }
 
     const [presentes, sugestoes, registros] = await Promise.all([
@@ -162,8 +165,14 @@ export async function telaDetalhesPessoa(principal, { id }) {
         areaIa.innerHTML = `<p class="nota nota--vazia">Nenhuma ideia gerada para ${nome} ainda.</p>`;
     }
 
+    // Só busca sozinho uma vez: o "?gerar=1" sai do endereço, para que recarregar a página não gere de novo.
+    const gerarAgora = gerarAutomaticamente && !ultimoRegistro;
+    if (gerarAutomaticamente) {
+        history.replaceState(null, "", `#/pessoas/${pessoa.id}`);
+    }
+
     // O aviso só aparece quando realmente falta o que mostrar e o perfil tem informações de menos.
-    if (temPoucasInformacoes(pessoa) && !presentes.length && !sugestoes.length && !ultimoRegistro) {
+    if (!gerarAgora && temPoucasInformacoes(pessoa) && !presentes.length && !sugestoes.length && !ultimoRegistro) {
         principal.querySelector("#aviso-perfil").innerHTML = `
             <div class="dica">
                 <p><strong>Poucas informações sobre ${nome}.</strong> Ainda não dá para sugerir presentes relevantes.
@@ -172,9 +181,13 @@ export async function telaDetalhesPessoa(principal, { id }) {
             </div>`;
     }
 
-    botaoIa.addEventListener("click", async () => {
-        const conteudoAnterior = areaIa.innerHTML;
-        areaIa.innerHTML = `<p class="carregando">Gerando ideias com IA, isso pode levar alguns segundos...</p>`;
+    async function gerarIdeias(automatico) {
+        const conteudoAnterior = automatico
+            ? `<p class="nota nota--vazia">Nenhuma ideia gerada para ${nome} ainda.</p>`
+            : areaIa.innerHTML;
+        areaIa.innerHTML = `<p class="carregando">${automatico
+            ? `Buscando sugestões para ${nome} com IA, isso pode levar alguns segundos...`
+            : "Gerando ideias com IA, isso pode levar alguns segundos..."}</p>`;
         try {
             const { ideias, descartadas, repetidas } = await comBotaoOcupado(botaoIa, "Gerando...",
                 () => api.ideiasComIa(pessoa.id));
@@ -195,12 +208,19 @@ export async function telaDetalhesPessoa(principal, { id }) {
             if (avisoDescartadas) {
                 areaIa.insertAdjacentHTML("beforeend", `<p class="nota">${avisoDescartadas}</p>`);
             }
-            mostrarAviso("Novas ideias geradas e salvas no histórico.");
+            mostrarAviso(automatico ? "Sugestões prontas! Clique em \"Gerar mais sugestões\" para ver outras."
+                : "Novas ideias geradas e salvas no histórico.");
         } catch (erro) {
             areaIa.innerHTML = conteudoAnterior;
             mostrarErro(erro);
         }
-    });
+    }
+
+    botaoIa.addEventListener("click", () => gerarIdeias(false));
+    if (gerarAgora) {
+        // Sem await: a página fica pronta enquanto a IA trabalha, e o botão mostra que está ocupado.
+        gerarIdeias(true);
+    }
 }
 
 async function removerPessoa(pessoa) {

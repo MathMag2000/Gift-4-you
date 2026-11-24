@@ -33,7 +33,8 @@ const ROTAS = [
     { padrao: /^\/pessoas\/nova$/, secao: "pessoas", titulo: "Cadastrar pessoa",
         tela: (principal) => telaFormularioPessoa(principal, { modo: "cadastrar" }) },
     { padrao: /^\/pessoas\/(\d+)$/, secao: "pessoas", titulo: "Pessoa",
-        tela: (principal, [id]) => telaDetalhesPessoa(principal, { id }) },
+        tela: (principal, [id], consulta) => telaDetalhesPessoa(principal,
+            { id, gerarAutomaticamente: consulta.get("gerar") === "1" }) },
     { padrao: /^\/pessoas\/(\d+)\/editar$/, secao: "pessoas", titulo: "Editar pessoa",
         tela: (principal, [id]) => telaFormularioPessoa(principal, { modo: "editar", id }) },
     // Endereço antigo: as sugestões agora ficam na própria página da pessoa.
