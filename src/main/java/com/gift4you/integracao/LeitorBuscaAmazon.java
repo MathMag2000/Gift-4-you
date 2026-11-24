@@ -22,7 +22,16 @@ public class LeitorBuscaAmazon {
             "<div[^>]*data-component-type=\"s-search-result\"[^>]*>");
     private static final Pattern ASIN = Pattern.compile("data-asin=\"([A-Z0-9]{10})\"");
     private static final Pattern PATROCINADO = Pattern.compile("AdHolder|s-sponsored-label|/sspa/");
-    private static final Pattern TITULO = Pattern.compile("<h2[^>]*aria-label=\"([^\"]+)\"|<h2[^>]*>\\s*<span[^>]*>([^<]+)<");
+    /**
+     * Título do produto, em ordem de preferência. Em algumas categorias (ex.: roupas), o resultado traz antes
+     * uma linha só com a marca (h2 com "s-line-clamp-1"), que não deve virar o nome do produto.
+     */
+    private static final List<Pattern> TITULOS = List.of(
+            Pattern.compile("<h2[^>]*aria-label=\"([^\"]+)\""),
+            Pattern.compile("<h2[^>]*class=\"[^\"]*a-text-normal[^\"]*\"[^>]*>\\s*(?:<a[^>]*>\\s*)?<span[^>]*>([^<]+)<"),
+            Pattern.compile("<h2(?![^>]*s-line-clamp-1)[^>]*>\\s*<span[^>]*>([^<]+)<"));
+    /** A Amazon põe este prefixo no aria-label dos anúncios. */
+    private static final Pattern PREFIXO_ANUNCIO = Pattern.compile("^Anúncio patrocinado\\s*[–-]\\s*");
     private static final Pattern IMAGEM = Pattern.compile(
             "<img[^>]*class=\"s-image\"[^>]*src=\"([^\"]+)\"|<img[^>]*src=\"([^\"]+)\"[^>]*class=\"s-image\"");
     /** Sufixo de tamanho das imagens da Amazon (ex.: ._AC_UL320_); sem ele, vem a imagem original. */
@@ -56,12 +65,25 @@ public class LeitorBuscaAmazon {
         if (!asin.find() || PATROCINADO.matcher(bloco).find()) {
             return Optional.empty();
         }
-        String titulo = primeiroGrupo(TITULO.matcher(bloco)).map(this::decodificar).orElse("");
+        String titulo = titulo(bloco);
         String imagem = primeiroGrupo(IMAGEM.matcher(bloco))
                 .map(endereco -> TAMANHO_IMAGEM.matcher(endereco).replaceFirst(".$1"))
                 .orElse(null);
         BigDecimal preco = primeiroGrupo(PRECO.matcher(bloco)).map(this::converterPreco).orElse(null);
         return Optional.of(new ProdutoLoja(titulo, ENDERECO_PRODUTO + asin.group(1), imagem, preco));
+    }
+
+    private String titulo(String bloco) {
+        for (Pattern padrao : TITULOS) {
+            Optional<String> encontrado = primeiroGrupo(padrao.matcher(bloco))
+                    .map(this::decodificar)
+                    .map(texto -> PREFIXO_ANUNCIO.matcher(texto).replaceFirst("").trim())
+                    .filter(texto -> !texto.isEmpty());
+            if (encontrado.isPresent()) {
+                return encontrado.get();
+            }
+        }
+        return "";
     }
 
     /** Converte o formato brasileiro (1.234,56) para número. */
@@ -82,7 +104,7 @@ public class LeitorBuscaAmazon {
     }
 
     private String decodificar(String texto) {
-        return texto.replace("&amp;", "&").replace("&quot;", "\"").replace("&#39;", "'")
+        return texto.replace("&amp;", "&").replace("&quot;", "\"").replace("&#39;", "'").replace("&#x27;", "'")
                 .replace("&lt;", "<").replace("&gt;", ">");
     }
 }

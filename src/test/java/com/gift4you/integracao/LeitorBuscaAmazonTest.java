@@ -57,6 +57,37 @@ class LeitorBuscaAmazonTest {
         assertThat(prensa.preco()).isEqualByComparingTo("1299.90");
     }
 
+    /** Formato real das buscas de roupas: uma linha só com a marca antes do título do produto. */
+    @Test
+    void usaOTituloDoProdutoENaoALinhaDaMarca() {
+        String pagina = """
+                <div role="listitem" data-asin="B0CAMISETA" data-component-type="s-search-result" class="s-result-item">
+                  <h2 class="a-size-mini s-line-clamp-1"><span class="a-size-base-plus a-color-base">OGOCHI</span></h2>
+                  <a class="a-link-normal" href="/dp/B0CAMISETA">
+                    <h2 aria-label="Camiseta Masculina Ogochi Básica 100% Algodão Premium"
+                        class="a-size-base-plus a-spacing-none a-color-base a-text-normal">
+                      <span>Camiseta Masculina Ogochi Básica 100% Algodão Premium</span></h2></a>
+                  <span class="a-offscreen">R$ 59,90</span>
+                </div>
+                <div role="listitem" data-asin="B0LOJAXXXX" data-component-type="s-search-result" class="s-result-item">
+                  <h2 class="a-size-mini s-line-clamp-1"><span class="a-size-base-plus a-color-base">Polo Wear</span></h2>
+                  <h2 class="a-size-base-plus a-spacing-none a-color-base a-text-normal"><span>Kit 3 Camisetas Polo Wear</span></h2>
+                </div>""";
+
+        assertThat(leitor.produtos(pagina)).extracting(ProdutoLoja::titulo)
+                .containsExactly("Camiseta Masculina Ogochi Básica 100% Algodão Premium", "Kit 3 Camisetas Polo Wear");
+    }
+
+    @Test
+    void removeOPrefixoDeAnuncioEDecodificaApostrofo() {
+        String pagina = """
+                <div data-asin="B0PERFUMEX" data-component-type="s-search-result">
+                  <h2 aria-label="Anúncio patrocinado – LA VIE EST BELLE L&#x27;ELIXIR 50ML"><span>x</span></h2>
+                </div>""";
+
+        assertThat(leitor.produtos(pagina).getFirst().titulo()).isEqualTo("LA VIE EST BELLE L'ELIXIR 50ML");
+    }
+
     @Test
     void paginaSemResultadosOuBloqueadaNaoEncontraNada() {
         String captcha = "<html><form action=\"/errors/validateCaptcha\"><img src=\"captcha.jpg\"></form></html>";
